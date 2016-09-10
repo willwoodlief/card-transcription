@@ -3,7 +3,7 @@
 
 <div class="collapse navbar-collapse navbar-top-menu-collapse navbar-left"> <!-- Left navigation items -->
 	<ul class="nav navbar-nav ">
-		<li><a href="<?=$us_url_root?>"><i class="fa fa-home"></i> Home</a></li>
+
         <?php if ($user->roles() && in_array("Uploader", $user->roles())) { ?>
             <li><a href="<?=$us_url_root?>pages/upload.php"><i class="fa fa-fw fa-upload"></i> Upload </a></li> <!-- Common for Hamburger and Regular menus link -->
         <?php } ?>

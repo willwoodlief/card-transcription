@@ -11,6 +11,10 @@
 !/log/.keep
 /tmp/*
 !/tmp/.keep
+!/tmp/local_uploads/.keep
+
+/users/js/plugins/darkroomjs/node_modules/*
+!/users/js/plugins/darkroomjs/node_modules/.keep
 
 
 # Ignore application configuration
