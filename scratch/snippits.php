@@ -21,5 +21,22 @@ print '<pre>'.var_dump($user->data()).'</pre>';
 $perms = fetchUserPermissions($user->data()->id);
 print '<hr><pre>'.var_dump($perms).'</pre>';
 print '<hr><pre>'.var_dump($user->roles()).'</pre>';
+
+
+
+
+foreach (
+    rest_helper('https://api.github.com/users/willwoodlief/repos')
+        ->repositories as $repo) {
+    echo $repo->name, "<br>\n";
+    echo htmlentities($repo->description), "<br>\n";
+    echo "<hr>\n";
+}
+
 ?>
+
+
+
+
+
 

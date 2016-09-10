@@ -114,6 +114,18 @@ if(!empty($_POST['settings'])){
 		$fields=array('track_guest'=>$track_guest);
 		$db->update('settings',1,$fields);
 	}
+    if($settings->website_url != $_POST['website_url']) {
+        $web_url = addhttp(Input::get('website_url'));
+        $fields=array('website_url'=>$web_url);
+        $db->update('settings',1,$fields);
+    }
+
+    if($settings->s3_bucket_name != $_POST['s3_bucket_name']) {
+        $web_url = Input::get('s3_bucket_name');
+        $fields=array('s3_bucket_name'=>$web_url);
+        $db->update('settings',1,$fields);
+    }
+
 
 	Redirect::to('admin.php');
 }
@@ -295,6 +307,21 @@ if(file_exists($abs_us_root.$us_url_root.'usersc/includes/admin_panels.php')){
 		<label for="site_name">Site Name</label>
 		<input type="text" class="form-control" name="site_name" id="site_name" value="<?=$settings->site_name?>">
 		</div>
+
+        <!-- Website Url -->
+        <div class="form-group">
+            <label for="website_url">Main Website URL (locals writes to this)</label>
+            <input type="text" class="form-control" name="website_url" id="website_url" value="<?=$settings->website_url?>">
+        </div>
+
+
+        <!-- s3_bucket_name  -->
+        <div class="form-group">
+            <label for="s3_bucket_name">S3 Bucket Name</label>
+            <input type="text" class="form-control" name="s3_bucket_name" id="s3_bucket_name" value="<?=$settings->s3_bucket_name?>">
+        </div>
+
+
 
 		<!-- Recaptcha Option -->
 		<div class="form-group">

@@ -1,5 +1,9 @@
 <?php
 require_once 'private_init.php';
+
+# because some web servers will fork a process which inherits the same random seed
+mt_srand(crc32(microtime()+ getmypid()));
+
 session_start();
 
 $abs_us_root=$_SERVER['DOCUMENT_ROOT'];
@@ -49,7 +53,7 @@ $GLOBALS['config'] = array(
 //If you changed your UserSpice or UserCake database prefix
 //put it here.
 $db_table_prefix = "uc_";  //Old database prefix
-$copyright_message = 'HT';
+$copyright_message = 'Enrich';
 
 
 $your_private_key = getenv('CAPTCHA_SECRET');
