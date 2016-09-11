@@ -93,7 +93,7 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
 
      $status_to_post = '';
      try {
-         $result = $s3Client->putObject(array(
+         $result = @$s3Client->putObject(array(
              'Bucket' => $to_bucket_name,
              'Key' => $front_key_name,
              'SourceFile' => $front_card_path,
@@ -117,7 +117,7 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
      //echo $result['ObjectURL'];
 
      try {
-         $result = $s3Client->putObject(array(
+         $result = @$s3Client->putObject(array(
              'Bucket' => $to_bucket_name,
              'Key' => $back_key_name,
              'SourceFile' => $back_card_path,
@@ -475,4 +475,150 @@ function get_http_response_code($theURL) {
     $headers = get_headers($theURL);
     return substr($headers[0], 9, 3);
 }
+
+function get_jobs($b_is_transcribed,$b_is_checked,$transcribed_id = null,$checked_id=null){
+    $db = DB::getInstance();
+
+    if ($b_is_transcribed) {
+        $transcribed_op = 'IS NOT';
+    } else {
+        $transcribed_op = 'IS';
+    }
+
+    if ($b_is_checked) {
+        $checked_op = 'IS NOT';
+    } else {
+        $checked_op = 'IS';
+    }
+
+
+
+
+    $where_ids = [];
+    if ($transcribed_id) {
+        $transcribed_id = intval($transcribed_id);
+        array_push($where_ids,"j.transcriber_user_id = {$transcribed_id}");
+    }
+
+    if ($checked_id) {
+        $checked_id = intval($checked_id);
+        array_push($where_ids,"j.transcriber_user_id = {$checked_id}");
+    }
+
+    $where_users = '';
+    if (!empty($where_ids)) {
+        $where_users = implode(' and ',$where_ids);
+        $where_users = "AND {$where_users}";
+    }
+
+
+    $query = $db->query( "
+        select 
+          j.id, j.client_id, j.profile_id, j.is_initialized,
+          j.transcriber_user_id, j.checker_user_id,
+
+          UNIX_TIMESTAMP(j.created_at) as created_timestamp,
+          UNIX_TIMESTAMP(j.modified_at) as modified_timestamp,
+          UNIX_TIMESTAMP(j.uploaded_at) as uploaded_timestamp,
+          UNIX_TIMESTAMP(j.transcribed_at) as transcribed_timestamp,
+          UNIX_TIMESTAMP(j.checked_at) as checked_timestamp,
+
+          j.uploader_email, j.uploader_lname,
+          j.uploader_fname, 
+          
+          j.fname, j.mname, j.lname, j.suffix, j.designations,
+          j.address, j.city, j.state, j.zip, j.email, j.website, j.phone,
+          j.cell_phone, j.fax, j.skype,
+          utrans.id as utrans_id,utrans.email as utrans_email, utrans.fname as utrans_fname, utrans.lname as utrans_lname,
+          uchecks.id as uchecks_id,uchecks.email as uchecks_email, uchecks.fname as uchecks_fname, uchecks.lname as uchecks_lname,
+          org_side_a.id as org_side_a_id,org_side_a.image_url as org_side_a_url , org_side_a.image_height  as org_side_a_height, org_side_a.image_width as org_side_a_width,
+          org_side_b.id as org_side_b_id,org_side_b.image_url as org_side_b_url , org_side_b.image_height  as org_side_b_height, org_side_b.image_width as org_side_b_width,
+          edit_side_a.id as edit_side_a_id,edit_side_a.image_url as edit_side_a_url , edit_side_a.image_height  as edit_side_a_height, edit_side_a.image_width as edit_side_a_width,
+          edit_side_b.id as edit_side_b_id,edit_side_b.image_url as edit_side_b_url , edit_side_b.image_height  as edit_side_b_height, edit_side_b.image_width as edit_side_b_width
+
+        from ht_jobs j
+          left join users utrans ON utrans.id = j.transcriber_user_id
+          left join users uchecks ON uchecks.id = j.checker_user_id
+          left join ht_images org_side_a ON org_side_a.ht_job_id = j.id AND org_side_a.side = 0 AND org_side_a.is_edited=0
+          left join ht_images org_side_b ON org_side_b.ht_job_id = j.id AND org_side_b.side = 0 AND org_side_b.is_edited=0
+          left join ht_images edit_side_a ON edit_side_a.ht_job_id = j.id AND edit_side_a.side = 0 AND edit_side_a.is_edited=1
+          left join ht_images edit_side_b ON edit_side_b.ht_job_id = j.id AND edit_side_b.side = 0 AND edit_side_b.is_edited=1
+
+        where j.transcriber_user_id {$transcribed_op} null AND j.checker_user_id {$checked_op} null AND j.is_initialized = 1 {$where_users}
+    ",[]);
+
+    $results = $query->results();
+    $ret = [];
+    foreach ($results as $rec) {
+        $job = [
+                'id' => $rec->id,
+                'client_id' => $rec->client_id,
+                'profile_id' => $rec->profile_id,
+                'is_initialized' => $rec->is_initialized,
+                'transcriber_user_id' =>  $rec->transcriber_user_id,
+                'checker_user_id' => $rec->checker_user_id,
+                'created_timestamp' =>  $rec->created_timestamp,
+                'uploaded_timestamp' => $rec->uploaded_timestamp,
+                'modified_timestamp' =>  $rec->modified_timestamp,
+                'transcribed_timestamp' => $rec->transcribed_timestamp,  'checked_timestamp' => $rec->checked_timestamp,
+                'uploader_email' => $rec->uploader_email,
+                'uploader_lname' =>  $rec->uploader_lname,
+                'uploader_fname' => $rec->uploader_fname
+        ];
+        
+        $transcribe = [
+            'fname' => $rec->fname, 'mname' => $rec->mname, 'lname' => $rec->lname, 'suffix' => $rec->suffix, 'designations' => $rec->designations,
+            'address' => $rec->address, 'city' => $rec->city, 'state' => $rec->state, 'zip' => $rec->zip, 'email' => $rec->email,
+            'website' => $rec->website, 'phone' => $rec->phone,
+            'cell_phone' => $rec->cell_phone, 'fax' => $rec->fax, 'skype' => $rec->skype
+        ];
+        
+        $translater = [
+            'id'=>$rec->utrans_id,'email' => $rec->utrans_email, 'fname' => $rec->utrans_fname, 'lname' => $rec->utrans_lname
+        ];
+
+        $checker = [
+            'id'=>$rec->uchecks_id,'email' => $rec->uchecks_email, 'fname' => $rec->uchecks_fname, 'lname' => $rec->uchecks_lname
+        ];
+        
+        $org_side_a = [
+            'id' => $rec->org_side_a_id,'url' => $rec->org_side_a_url , 'height' => $rec->org_side_a_height, 'width' => $rec->org_side_a_width,
+        ];
+
+        $org_side_b = [
+            'id' => $rec->org_side_b_id,'url' => $rec->org_side_b_url , 'height' => $rec->org_side_b_height, 'width' => $rec->org_side_b_width,
+        ];
+
+        $edit_side_a = [
+            'id' => $rec->edit_side_a_id,'url' => $rec->edit_side_a_url , 'height' => $rec->edit_side_a_height, 'width' => $rec->edit_side_a_width,
+        ];
+
+        $edit_side_b = [
+            'id' => $rec->edit_side_b_id,'url' => $rec->edit_side_b_url , 'height' => $rec->edit_side_b_height, 'width' => $rec->edit_side_b_width,
+        ];
+
+        $images = [
+          'org_side_a' =>  $org_side_a, 'org_side_b' =>  $org_side_b,'edit_side_a' =>  $edit_side_a, 'edit_side_b' =>  $edit_side_b,
+        ];
+
+
+
+        $node = [
+            'job' => $job,
+            'transcribe' =>  $transcribe,
+            'translater' => $translater,
+            'checker' => $checker,
+            'images' => $images
+        ];
+
+        array_push($ret,$node);
+
+        
+    }
+
+    return $ret;
+
+
+}
+
 ?>

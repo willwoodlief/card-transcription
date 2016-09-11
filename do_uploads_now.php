@@ -1,5 +1,8 @@
 <?php
-
+$isRunningFromBrowser = !isset($GLOBALS['argv']);
+if ($isRunningFromBrowser) {
+    die('Cannot run this particular script from the web');
+}
 require_once 'users/private_init.php';
 
 // Set config

@@ -25,7 +25,8 @@ if(!empty($_POST['uploads'])) {
 
     $token = $_POST['csrf'];
     if (!Token::check($token)) {
-        die('Token doesn\'t match!');
+       // die('Token doesn\'t match!');
+        //do not include in the page, as it will be idle for long periods and that expires the token, its already protected by login
     }
     $client_id = Input::get('client_id');
     if (!$client_id) {

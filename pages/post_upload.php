@@ -33,10 +33,7 @@ $ret = $_POST;
         ];
  */
 
-#create ht_job
-/*
- *  `client_id`, `profile_id`, `transcriber_user_id`, `checker_user_id`, `uploaded_at`, `created_at`, `modified_at`, `transcribed_at`, `checked_at`, `uploader_email`, `uploader_lname`, `uploader_fname`
- */
+
 
 $db = DB::getInstance();
 $fields=array(
@@ -56,6 +53,12 @@ if (!$what) {
 $jobid = $db->lastId();
 
 // Create an SDK class used to share configuration across clients.
+// api key and secret are in environmental variables
+$sharedConfig = [
+    'region'  => getenv('AWS_REGION'),
+    'version' => 'latest'
+];
+
 $sdk = new Aws\Sdk($sharedConfig);
 
 // Use an Aws\Sdk class to create the S3Client object.
@@ -84,35 +87,39 @@ $new_front_key_name = "img{$jobid}a_id{$clientID}_p{$profileID}_{$uploaded_date_
 $new_back_key_name = "img{$jobid}b_id{$clientID}_p{$profileID}_{$uploaded_date_string}.{$front_type}";
 
 try {
-    $s3Client->copyObject(array(
+    @$s3Client->copyObject(array(
         'Bucket'     => $our_bucket,
         'Key'        => $new_front_key_name,
         'CopySource' => "{$their_bucket}/{$front_key_name}",
     ));
 } catch (S3Exception $e) {
-    printErrorJSONAndDie('could not move front image in bucket: '. $e);
+    $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
+    printErrorJSONAndDie('could not move front image in bucket: '. $e->getMessage());
 }
 
 try {
-    $front_url = $s3Client->getObjectUrl($our_bucket, $new_front_key_name);
+    $front_url = @$s3Client->getObjectUrl($our_bucket, $new_front_key_name);
 } catch (S3Exception $e) {
-    printErrorJSONAndDie('could not get front image url: '. $e);
+    $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
+    printErrorJSONAndDie('could not get front image url: '. $e->getMessage());
 }
 
 try {
-    $s3Client->copyObject(array(
+    @$s3Client->copyObject(array(
         'Bucket'     => $our_bucket,
         'Key'        => $new_back_key_name,
         'CopySource' => "{$their_bucket}/{$back_key_name}",
     ));
 } catch (S3Exception $e) {
-    printErrorJSONAndDie('could not move back image in bucket: '. $e);
+    $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
+    printErrorJSONAndDie('could not move back image in bucket: '. $e->getMessage());
 }
 
 try {
-    $back_url = $s3Client->getObjectUrl($our_bucket, $new_back_key_name);
+    $back_url = @$s3Client->getObjectUrl($our_bucket, $new_back_key_name);
 } catch (S3Exception $e) {
-    printErrorJSONAndDie('could not get back image url: '. $e);
+    $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
+    printErrorJSONAndDie('could not get back image url: '. $e->getMessage());
 }
 
 
@@ -132,6 +139,7 @@ $fields=array(
 );
 $what = $db->insert('ht_images',$fields);
 if (!$what) {
+    $db->update('ht_jobs', $jobid, ['error_message' => $db->error()]);
     printErrorJSONAndDie('could not create front image: '. $db->error());
 }
 
@@ -148,6 +156,7 @@ $fields=array(
 );
 $what = $db->insert('ht_images',$fields);
 if (!$what) {
+    $db->update('ht_jobs', $jobid, ['error_message' => $db->error()]);
     printErrorJSONAndDie('could not create back image: '. $db->error());
 }
 
@@ -157,7 +166,11 @@ if (!$what) {
 
 //notifications can happen when they are logged in so this is all this call does
 // if got here then signal this in the job
-$db->update('ht_jobs', $jobid, ['is_initialized' => 1]);
+$what = $db->update('ht_jobs', $jobid, ['is_initialized' => 1]);
+if (!$what) {
+    $db->update('ht_jobs', $jobid, ['error_message' => $db->error()]);
+    printErrorJSONAndDie('could not toggle initialized flag for jobs: '. $db->error());
+}
 
 $ret['message']= "started job {$jobid}";
 printOkJSONAndDie($ret);
