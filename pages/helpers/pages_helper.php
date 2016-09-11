@@ -2,10 +2,13 @@
 //will upload all unless is set
 function upload_local_storage($idOnly=null) {
 
+
     $db = DB::getInstance();
     $settingsQ = $db->query("Select * FROM settings");
     $settings = $settingsQ->first();
-    if (!is_connected($settings->website_url)) {return;}
+    if (!test_site_connection($settings->website_url)) {
+        return false;
+    }
 
     $sharedConfig = [
         'region'  => getenv('AWS_REGION'),
@@ -22,20 +25,29 @@ function upload_local_storage($idOnly=null) {
         $query = $db->query( "select * from ht_waiting p where p.id = ? and p.is_uploaded = 0;",[$idOnly]);
 
         if ($query->count() >0) {
-            $rec = $query->results()->first();
-            if (!is_connected($settings->website_url)) {return;}
+
+            $rec = $query->results()[0];
             upload_from_waiting_row($rec,$settings->s3_bucket_name,$s3Client,$settings->website_url);
         }
 
     } else {
-        $query = $db->query( "select * from ht_waiting p where  and p.is_uploaded = 0 order by p.created_at;",[$idOnly]);
+        $query = $db->query( "select * from ht_waiting p where  p.is_uploaded = 0 and upload_result is null order by p.created_at;",[]);
         $results = $query->results();
         foreach ($results as $rec) {
-            if (!is_connected($settings->website_url)) {return;}
-            upload_from_waiting_row($rec,$settings->s3_bucket_name,$s3Client,$settings->website_url);
+            if (!test_site_connection($settings->website_url)) {return;}
+
+            print "Uploading record id ".$rec->id . ' [Client ID '.$rec->client_id.'] ' . ' [Profile ID '.$rec->profile_id.'] ' . "\n";
+            $whatans = upload_from_waiting_row($rec,$settings->s3_bucket_name,$s3Client,$settings->website_url);
+            if ($whatans !== true) {
+                print '[Error] '. $whatans  . "\n";
+            } else {
+                print '[OK]'. "\n";
+            }
         }
 
     }
+
+    return true;
 
 }
 
@@ -45,6 +57,7 @@ function upload_local_storage($idOnly=null) {
 function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
 
     $db = DB::getInstance();
+    $status_to_post = '';
  try {
      #we are going to send the two pictures to the holding folder in the s3 bucket, after adding in a guid to prevent collisions between diferent machines
      $guid = getGUID();
@@ -58,11 +71,22 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
      $profile_id = $row->profile_id;
      $date_string = date("Ymd_H:i");
 
+     #test to make sure the file paths are there
+     if (!is_readable($front_card_path)) {
+         $status_to_post.= "cannot get {$front_card_path}";
+         return $status_to_post;
+     }
+
+     if (!is_readable($back_card_path)) {
+         $status_to_post.= "cannot get {$back_card_path}";
+         return  $status_to_post;
+     }
+
      //img1234567a_id0268_p02_YYYYMMDD.jpg is example of final name,but these are temporary and from different comptuters
-     $front_key_name = "preprocessing/preprocess-{$waiting_id}a-id{$client_id}-p{$profile_id}-{$date_string}-guid=${$guid}.{$front_file_ext}";
+     $front_key_name = "preprocessing/preprocess-{$waiting_id}a-id{$client_id}-p{$profile_id}-{$date_string}-guid={$guid}.{$front_file_ext}";
      $front_mime_type = mime_type($front_card_path);
 
-     $back_key_name = "preprocessing/preprocess-{$waiting_id}b-id{$client_id}-p{$profile_id}-{$date_string}-guid=${$guid}.{$back_file_ext}";
+     $back_key_name = "preprocessing/preprocess-{$waiting_id}b-id{$client_id}-p{$profile_id}-{$date_string}-guid={$guid}.{$back_file_ext}";
      $back_mime_type = mime_type($back_card_path);
 
 
@@ -74,7 +98,7 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
              'SourceFile' => $front_card_path,
              'ContentType' => $front_mime_type,
              'ACL' => 'public-read',
-             'StorageClass' => 'REDUCED_REDUNDANCY',
+         //    'StorageClass' => 'REDUCED_REDUNDANCY',
              'Metadata' => array(
                  'client_id' => $client_id,
                  'profile_id' => $profile_id
@@ -85,7 +109,7 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
          $status_to_post .= ', '.$result['ObjectURL'] ;
      } catch (S3Exception $e) {
          $status_to_post .= ', '.$e->getMessage();
-         return; //writes status to row in finally block
+         return  $status_to_post; //writes status to row in finally block
      }
 
 
@@ -95,10 +119,10 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
          $result = $s3Client->putObject(array(
              'Bucket' => $to_bucket_name,
              'Key' => $back_key_name,
-             'SourceFile' => $front_card_path,
+             'SourceFile' => $back_card_path,
              'ContentType' => $back_mime_type,
              'ACL' => 'public-read',
-             'StorageClass' => 'REDUCED_REDUNDANCY',
+             //'StorageClass' => 'REDUCED_REDUNDANCY',
              'Metadata' => array(
                  'client_id' => $client_id,
                  'profile_id' => $profile_id
@@ -108,7 +132,7 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
          $status_to_post .= ', '.$result['ObjectURL'] ;
      } catch (S3Exception $e) {
          $status_to_post .= ', '.$e->getMessage();
-         return; //writes status to row in finally block
+         return  $status_to_post; //writes status to row in finally block
      }
 
      //echo $result['ObjectURL'];.
@@ -117,12 +141,14 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
      $url_to_use = $website_url . '/pages/post_upload.php';
      $msg = ['client_id' => $client_id, 'profile_id' => $profile_id, 'front' => $front_key_name, 'back' => $back_key_name, 'timestamp' => time()];
      $what = rest_helper($url_to_use, $params = $msg, $verb = 'POST', $format = 'json');
-     if ($what['status'] == 'ok') {
+     if ($what->status == 'ok') {
          //update the $row
          $db->update('ht_waiting', $row->id, ['is_uploaded' => 1, 'uploaded_at' => date('Y-m-d H:i:s')]);
-         $status_to_post .= ', '.$what['message'];
+         $status_to_post .= ', '.$what->message;
+         return true;
      } else {
-         $status_to_post .= ', '.$what['message'];
+         $status_to_post .= ', ERROR From Server:'.$what->message;
+         return  $status_to_post;
      }
  }
  finally {
@@ -199,7 +225,9 @@ function get_string_filepath_from_id($i) {
 function is_connected($url_to_check)
 {
     //http://stackoverflow.com/questions/4860365/determine-in-php-script-if-connected-to-internet
-    $connected = @fsockopen($url_to_check, 80);
+    $connected = fsockopen($url_to_check, 80);
+    $y = var_dump($connected);
+
     //website, port  (try 80 or 443)
     if ($connected){
         $is_conn = true; //action when connected
@@ -249,7 +277,9 @@ function rest_helper($url, $params = null, $verb = 'GET', $format = 'json')
     $cparams = array(
         'http' => array(
             'method' => $verb,
-            'ignore_errors' => true
+            'ignore_errors' => true,
+            'header' => "Content-Type: application/x-www-form-urlencoded\r\n".
+                                        "User-Agent:MyAgent/1.0\r\n"
         )
     );
     if ($params !== null) {
@@ -262,7 +292,7 @@ function rest_helper($url, $params = null, $verb = 'GET', $format = 'json')
     }
 
     $context = stream_context_create($cparams);
-    $fp = fopen($url, 'rb', false, $context);
+    $fp = @fopen($url, 'rb', false, $context);
     if (!$fp) {
         $res = false;
     } else {
@@ -271,7 +301,7 @@ function rest_helper($url, $params = null, $verb = 'GET', $format = 'json')
         // all the redirects:
         // $meta = stream_get_meta_data($fp);
         // var_dump($meta['wrapper_data']);
-        $res = stream_get_contents($fp);
+        $res = @stream_get_contents($fp);
     }
 
     if ($res === false) {
@@ -364,6 +394,33 @@ function print_nice($elem,$max_level=15,$print_nice_stack=array()){
 }
 
 
+function TO($object){ //Test Object
+    if(!is_object($object)){
+        throw new Exception("This is not a Object");
+        return;
+    }
+    if(class_exists(get_class($object), true)) echo "<pre>CLASS NAME = ".get_class($object);
+    $reflection = new ReflectionClass(get_class($object));
+    echo "<br />";
+    echo $reflection->getDocComment();
+
+    echo "<br />";
+
+    $metody = $reflection->getMethods();
+    foreach($metody as $key => $value){
+        echo "<br />". $value;
+    }
+
+    echo "<br />";
+
+    $vars = $reflection->getProperties();
+    foreach($vars as $key => $value){
+        echo "<br />". $value;
+    }
+    echo "</pre>";
+}
+
+
 # this protects from having a umask set in a shared environment
 function mkdir_r($dirName, $rights=0777){
     $dirs = explode('/', $dirName);
@@ -376,5 +433,18 @@ function mkdir_r($dirName, $rights=0777){
         }
 
     }
+}
+
+function test_site_connection($theURL) {
+    if(intval(get_http_response_code($theURL)) < 400){
+        return true;
+    }
+
+    return false;
+}
+
+function get_http_response_code($theURL) {
+    $headers = get_headers($theURL);
+    return substr($headers[0], 9, 3);
 }
 ?>
