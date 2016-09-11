@@ -71,6 +71,7 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
      $profile_id = $row->profile_id;
      $date_string = date("Ymd_H:i");
 
+
      #test to make sure the file paths are there
      if (!is_readable($front_card_path)) {
          $status_to_post.= "cannot get {$front_card_path}";
@@ -139,7 +140,24 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
 
      #now send message to website
      $url_to_use = $website_url . '/pages/post_upload.php';
-     $msg = ['client_id' => $client_id, 'profile_id' => $profile_id, 'front' => $front_key_name, 'back' => $back_key_name, 'timestamp' => time()];
+     $msg = [
+         'client_id' => $client_id,
+         'profile_id' => $profile_id,
+         'front' => $front_key_name,
+         'back' => $back_key_name,
+         'timestamp' => time(),
+         'bucket' => $to_bucket_name,
+         'front_width'  => $row->front_width,
+         'front_height'  => $row->front_height,
+         'back_width'  => $row->back_width,
+         'back_height'  => $row->back_height,
+         'front_type' => $row->front_file_type,
+         'back_type' => $row->back_file_type,
+         'uploader_email' => $row->uploader_email,
+         'uploader_lname' => $row->uploader_lname,
+         'uploader_fname' => $row->uploader_fname,
+         'uploaded_at'  => $row->created_at
+        ];
      $what = rest_helper($url_to_use, $params = $msg, $verb = 'POST', $format = 'json');
      if ($what->status == 'ok') {
          //update the $row
@@ -168,6 +186,9 @@ function add_waiting($client_id,$profile_id,$tmppath_image_front,$tmppath_image_
     $db = DB::getInstance();
     $fields=array(
         'user_id' => $user->data()->id,
+        'uploader_email' => $user->data()->email,
+        'uploader_lname' => $user->data()->fname,
+        'uploader_fname' => $user->data()->fname,
         'client_id'=> $client_id,
         'profile_id'=> $profile_id
     );
@@ -193,12 +214,19 @@ function add_waiting($client_id,$profile_id,$tmppath_image_front,$tmppath_image_
     copy($tmppath_image_back,$back_path);
     chmod($back_path,0666);
 
+    list($front_width, $front_height) = getimagesize($front_path);
+    list($back_width, $back_height) = getimagesize($back_path);
+
     #update record to waiting
     $fields=array(
         'front_path'=> $front_path,
         'back_path'=> $back_path,
         'front_file_type'  => $front_img_type,
-        'back_file_type'  => $back_img_type
+        'back_file_type'  => $back_img_type,
+        'front_width'  => $front_width,
+        'front_height'  => $front_height,
+        'back_width'  => $back_width,
+        'back_height'  => $back_height
     );
     $db->update('ht_waiting',$theNewId,$fields);
 
@@ -241,7 +269,7 @@ function is_connected($url_to_check)
 
 
 
-function base64_to_jpeg($base64_string, $output_file) {
+function base64_to_image($base64_string, $output_file) {
     //http://stackoverflow.com/questions/15153776/convert-base64-string-to-an-image-file
     $ifp = fopen($output_file, "wb");
 
