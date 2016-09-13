@@ -208,6 +208,11 @@ if(!empty($_POST['transcribe'])) {
                         </div>
 
                         <div class="form-group">
+                            <label for="zip">Zip <span style="font-size: smaller">(auto fills in city and state)<span> </label>
+                            <input type="text" class="form-control" name="zip" id="zip" value="<?=$job->transcribe->zip ?>">
+                        </div>
+
+                        <div class="form-group">
                             <label for="city">City</label>
                             <input type="text" class="form-control" name="city" id="city" value="<?=$job->transcribe->city ?>">
                         </div>
@@ -217,10 +222,7 @@ if(!empty($_POST['transcribe'])) {
                             <input type="text" class="form-control" name="state" id="state" value="<?=$job->transcribe->state ?>">
                         </div>
 
-                        <div class="form-group">
-                            <label for="zip">Zip</label>
-                            <input type="text" class="form-control" name="zip" id="zip" value="<?=$job->transcribe->zip ?>">
-                        </div>
+
 
                         <div class="form-group">
                             <label for="email">Email</label>
@@ -313,5 +315,6 @@ if(!empty($_POST['transcribe'])) {
 <?php require_once $abs_us_root.$us_url_root.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
 
 <!-- Place any per-page javascript here -->
+<script src="js/auto_zip.js"></script>
 
 <?php require_once $abs_us_root.$us_url_root.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>
