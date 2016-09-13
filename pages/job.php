@@ -1,9 +1,17 @@
 <?php
 //die(var_dump($_REQUEST));
 require_once '../users/init.php';
-require_once $abs_us_root.$us_url_root.'users/includes/header.php';
+require_once $abs_us_root.$us_url_root.'users/includes/header_not_closed.php';
+?>
+
+<link rel="stylesheet" href="../users/js/plugins/darkroomjs/build/darkroom.css">
+
+</head>
+<body>
+<?php
 require_once $abs_us_root.$us_url_root.'users/includes/navigation.php';
 require_once $abs_us_root.$us_url_root.'pages/helpers/pages_helper.php';
+
 
 if (!securePage($_SERVER['PHP_SELF'])){die();}
 if ($settings->site_offline==1){die("The site is currently offline.");}
@@ -157,7 +165,7 @@ if(!empty($_POST['transcribe'])) {
 				<!-- Content goes here -->
         <div class="row">
 
-                <div class="col-xs-6 col-sm-3 col-md-3 col-lg-3" style="height:600px;overflow-y: scroll;">
+                <div class="col-xs-6 col-sm-3 col-md-3 col-lg-3" style="/*height:600px;overflow-y: scroll;*/">
 
                     <?php if ($b_is_checker && $job->translater->id) { ?>
                         <form class="" action="job.php" name="job" method="post">
@@ -261,45 +269,97 @@ if(!empty($_POST['transcribe'])) {
 
 
                 </div>
-                <div class="col-sm-9  col-md-9  col-lg-9 "  style="background-color: gray;">
-                    <img src="<?=$job->images->edit_side_a->id?
-                                        $job->images->edit_side_a->url :
-                                        $job->images->org_side_a->url?>"
+                <div class="col-sm-9  col-md-9  col-lg-9 "  style="background-color: floralwhite;">
+                    <div class="panel-group">
+                        <div class="panel panel-default img-outer-holder">
+                            <div class="panel-heading">
+                                <div class="row">
+                                    <div class="col-xs-6 col-md-6">
+                                        Side A (edited version or orginal if never edited)
+                                    </div>
 
-                         width="<?=$job->images->edit_side_a->id?
-                             $job->images->edit_side_a->width :
-                             $job->images->org_side_a->width?>"
-
-                         height="<?=$job->images->edit_side_a->id?
-                             $job->images->edit_side_a->height :
-                             $job->images->org_side_a->height?>"
-                    />
-                    <br>
-                    <img src="<?=$job->images->edit_side_b->id?
-                        $job->images->edit_side_b->url :
-                        $job->images->org_side_b->url?>"
-
-                         width="<?=$job->images->edit_side_b->id?
-                             $job->images->edit_side_b->width :
-                             $job->images->org_side_b->width?>"
-
-                         height="<?=$job->images->edit_side_b->id?
-                             $job->images->edit_side_b->height :
-                             $job->images->org_side_b->height?>"
-                        />
-                    <br>
-
-                    <img src="<?=$job->images->org_side_a->url?>"
-                         width="<?=$job->images->org_side_a->width?>"
-                         height="<?=$job->images->org_side_a->height?>"
-                    />
-
-                    <img src="<?=$job->images->org_side_b->url?>"
-                         width="<?=$job->images->org_side_b->width?>"
-                         height="<?=$job->images->org_side_b->height?>"
-                    />
+                                    <div class="col-xs-6 col-md-3">
+                                        <button id = "revert-edit-a" type="button" class="btn btn-warning" onclick="reload_a();">Revert to Original</button>
+                                    </div>
+                                 </div>
 
 
+                            </div>
+                            <div class="panel-body">
+                                <?php
+                                    if ($job->images->edit_side_a->id) {
+                                        $width = $job->images->edit_side_a->width;
+                                        $height = $job->images->edit_side_a->height;
+
+                                    } else {
+                                        $width = $job->images->org_side_a->width;
+                                        $height = $job->images->org_side_a->height;
+                                    }
+
+                                    $max = $width;
+                                    if ($height > $max) {$max = $height;}
+                                    if ($max < 400) { $max = 400;}
+                                ?>
+                                <iframe src="edit_job_image.php?jobid=<?= $job->job->id; ?>&side=0&force_original=0" name="side-a-edit" id="side-a-edit" height="<?= $max + 50 ?>px" width="<?= $max + 70 ?>px" style="border:0 none;"></iframe>
+                            </div>
+                        </div>
+
+
+                        <div class="panel panel-default img-outer-holder">
+                            <div class="panel-heading">
+                                <div class="row">
+                                    <div class="col-xs-6 col-md-6">
+                                        Side B (edited version or orginal if never edited)
+                                    </div>
+
+                                    <div class="col-xs-6 col-md-3">
+                                        <button id = "revert-edit-b" type="button" onclick="reload_b();" class="btn btn-warning">Revert to Original</button>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="panel-body">
+                                <?php
+                                if ($job->images->edit_side_b->id) {
+                                    $width = $job->images->edit_side_b->width;
+                                    $height = $job->images->edit_side_b->height;
+
+                                } else {
+                                    $width = $job->images->org_side_b->width;
+                                    $height = $job->images->org_side_b->height;
+                                }
+
+                                $max = $width;
+                                if ($height > $max) {$max = $height;}
+                                if ($max < 400) { $max = 400;}
+                                ?>
+                                <iframe src="edit_job_image.php?jobid=<?= $job->job->id; ?>&side=1&force_original=0" name="side-b-edit" id="side-b-edit" height="<?= $max + 50 ?>px" width="<?= $max + 70 ?>px" style="border:0 none;"></iframe>
+                            </div>
+                            </div>
+                        </div>
+
+
+                        <div class="panel panel-default img-outer-holder">
+                            <div class="panel-heading">Side A (Original Version)</div>
+                            <div class="panel-body">
+                                <img src="<?=$job->images->org_side_a->url?>"
+                                     width="<?=$job->images->org_side_a->width?>"
+                                     height="<?=$job->images->org_side_a->height?>"
+                                     name = "side-a-origonal"
+                                />
+                            </div>
+                        </div>
+                        <div class="panel panel-default img-outer-holder">
+                            <div class="panel-heading">Side B (Original Version)</div>
+                            <div class="panel-body">
+                                <img src="<?=$job->images->org_side_b->url?>"
+                                     width="<?=$job->images->org_side_b->width?>"
+                                     height="<?=$job->images->org_side_b->height?>"
+                                     name = "side-b-origonal"
+                                />
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
 
@@ -308,7 +368,7 @@ if(!empty($_POST['transcribe'])) {
 
 
 				<!-- Content Ends Here -->
-	</div> <!-- /.container -->
+
 </div> <!-- /.wrapper -->
                
 
@@ -316,5 +376,35 @@ if(!empty($_POST['transcribe'])) {
 
 <!-- Place any per-page javascript here -->
 <script src="js/auto_zip.js"></script>
+<script>
+    function reload_a() {
+        var new_height = $('#side-a-origonal').attr('height');
+        var new_width = $('#side-a-origonal').attr('width');
+        var max = new_height;
+        if (max < new_width) {
+            max = new_width;
+        }
+        if (max < 400) { max = 400;}
+        new_height = max + 50;
+        new_width = max + 70;
+        $('#side-a-edit').attr( 'src', "edit_job_image.php?jobid=<?= $job->job->id; ?>&side=0&force_original=1").
+            width(new_width).height(new_height);
+    }
+
+    function reload_b() {
+        var new_height = $('#side-b-origonal').attr('height');
+        var new_width = $('#side-b-origonal').attr('width');
+        var max = new_height;
+        if (max < new_width) {
+            max = new_width;
+        }
+        if (max < 400) { max = 400;}
+        new_height = max + 50;
+        new_width = max + 70;
+        $('#side-b-edit').attr( 'src', "edit_job_image.php?jobid=<?= $job->job->id; ?>&side=1&force_original=1").
+            width(new_width).height(new_height);
+    }
+</script>
+
 
 <?php require_once $abs_us_root.$us_url_root.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>

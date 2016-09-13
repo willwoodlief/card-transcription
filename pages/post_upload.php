@@ -85,7 +85,7 @@ $clientID = $_POST['client_id'];
 $profileID = $_POST['profile_id'];
 //img1234567a_id0268_p02_YYYYMMDD.jpg
 $new_front_key_name = "img{$jobid}a_id{$clientID}_p{$profileID}_{$uploaded_date_string}.{$front_type}";
-$new_back_key_name = "img{$jobid}b_id{$clientID}_p{$profileID}_{$uploaded_date_string}.{$front_type}";
+$new_back_key_name = "img{$jobid}b_id{$clientID}_p{$profileID}_{$uploaded_date_string}.{$back_type}";
 
 try {
     @$s3Client->copyObject(array(
