@@ -9,7 +9,7 @@
         */
 </script>
 <?php
-
+date('Y-m-d H:i:s')
 
 ?>
 
@@ -34,6 +34,21 @@ foreach (
 }
 
 ?>
+
+s3 policy for allowing images to be read from bucket on website
+{
+"Version":"2012-10-17",
+"Statement":[{
+"Sid":"PublicReadGetObject",
+"Effect":"Allow",
+"Principal": "*",
+"Action":["s3:GetObject"],
+"Resource":["arn:aws:s3:::example-bucket/*"
+]
+}
+]
+}
+see http://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteAccessPermissionsReqd.html
 
 
 

@@ -9,7 +9,7 @@ require_once $abs_us_root.$us_url_root.'pages/helpers/pages_helper.php';
 if (!securePage($_SERVER['PHP_SELF'])){die();}
 if ($settings->site_offline==1){die("The site is currently offline.");}
 
-
+$jobid = null;
 $status = Input::get('status');
 switch($status) {
     case false: {
@@ -35,6 +35,14 @@ switch($status) {
         break;
     }
 
+    case 'jobid': {
+        $b_is_transcribed = false;
+        $b_is_checked = false;
+        $jobid =  intval(Input::get('jobid'));
+
+        break;
+    }
+
     default: {
         printErrorJSONAndDie('did not recognize status (not_started |transcribed_not_checked| checked) ');
     }
@@ -51,7 +59,7 @@ if ($checker_id) {
     $checker_id = intval($checker_id);
 }
 
-$info = get_jobs($b_is_transcribed,$b_is_checked,$transcriber_id,$checker_id);
+$info = get_jobs($jobid,$b_is_transcribed,$b_is_checked,$transcriber_id,$checker_id);
 printOkJSONAndDie(['jobs'=>$info]);
 
 

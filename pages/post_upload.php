@@ -40,7 +40,8 @@ $fields=array(
      'client_id' => $_POST['client_id'],
      'profile_id' => $_POST['profile_id'],
      'uploaded_at' => $_POST['uploaded_at'],
-     'created_at' => date('Y-m-d H:i:s'),
+     'created_at' => time(),
+     'modified_at' => time(),
      'uploader_email' => $_POST['uploader_email'],
      'uploader_lname' => $_POST['uploader_lname'],
      'uploader_fname' => $_POST['uploader_fname']
@@ -78,8 +79,8 @@ $back_type = $_POST['back_type'];
 $back_width = $_POST['back_width'];
 $back_height = $_POST['back_height'];
 
-$updatetime = date_create_from_format('Y-m-d H:i:s', $_POST['uploaded_at']);
-$uploaded_date_string = date('Ymd',$updatetime->getTimestamp());
+$updatetime =  $_POST['uploaded_at'];
+$uploaded_date_string = date('Ymd',$updatetime);
 $clientID = $_POST['client_id'];
 $profileID = $_POST['profile_id'];
 //img1234567a_id0268_p02_YYYYMMDD.jpg
@@ -134,7 +135,9 @@ $fields=array(
     'key_name' => $new_front_key_name,
     'image_url' => $front_url,
     'image_height' => $front_height,
-    'image_width' => $front_width
+    'image_width' => $front_width,
+    'created_at' => time(),
+    'modified_at' => time()
 
 );
 $what = $db->insert('ht_images',$fields);
@@ -151,12 +154,14 @@ $fields=array(
     'key_name' => $new_back_key_name,
     'image_url' => $back_url,
     'image_height' => $back_height,
-    'image_width' => $back_width
+    'image_width' => $back_width,
+    'created_at' => time(),
+    'modified_at' => time()
 
 );
 $what = $db->insert('ht_images',$fields);
 if (!$what) {
-    $db->update('ht_jobs', $jobid, ['error_message' => $db->error()]);
+    $db->update('ht_jobs', $jobid, ['error_message' => $db->error(),'modified_at'=>time()]);
     printErrorJSONAndDie('could not create back image: '. $db->error());
 }
 
@@ -168,7 +173,7 @@ if (!$what) {
 // if got here then signal this in the job
 $what = $db->update('ht_jobs', $jobid, ['is_initialized' => 1]);
 if (!$what) {
-    $db->update('ht_jobs', $jobid, ['error_message' => $db->error()]);
+    $db->update('ht_jobs', $jobid, ['error_message' => $db->error(),'modified_at'=>time()]);
     printErrorJSONAndDie('could not toggle initialized flag for jobs: '. $db->error());
 }
 

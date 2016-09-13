@@ -161,7 +161,7 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
      $what = rest_helper($url_to_use, $params = $msg, $verb = 'POST', $format = 'json');
      if ($what->status == 'ok') {
          //update the $row
-         $db->update('ht_waiting', $row->id, ['is_uploaded' => 1, 'uploaded_at' => date('Y-m-d H:i:s')]);
+         $db->update('ht_waiting', $row->id, ['is_uploaded' => 1, 'uploaded_at' => time()]);
          $status_to_post .= ', '.$what->message;
          return true;
      } else {
@@ -170,7 +170,7 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
      }
  }
  finally {
-     $db->update('ht_waiting', $row->id, ['upload_result' => $status_to_post, 'uploaded_at' => date('Y-m-d H:i:s')]);
+     $db->update('ht_waiting', $row->id, ['upload_result' => $status_to_post, 'modified_at' => time()]);
  }
 
 
@@ -190,7 +190,8 @@ function add_waiting($client_id,$profile_id,$tmppath_image_front,$tmppath_image_
         'uploader_lname' => $user->data()->fname,
         'uploader_fname' => $user->data()->fname,
         'client_id'=> $client_id,
-        'profile_id'=> $profile_id
+        'profile_id'=> $profile_id,
+        'created_at'=> time()
     );
     $db->insert('ht_waiting',$fields);
     $theNewId=$db->lastId();
@@ -226,7 +227,7 @@ function add_waiting($client_id,$profile_id,$tmppath_image_front,$tmppath_image_
         'front_width'  => $front_width,
         'front_height'  => $front_height,
         'back_width'  => $back_width,
-        'back_height'  => $back_height
+        'back_height'  => $back_height,
     );
     $db->update('ht_waiting',$theNewId,$fields);
 
@@ -370,6 +371,8 @@ function printErrorJSONAndDie($message,$phpArray=[]) {
     exit;
 }
 
+
+
 //for debugging
 function print_nice($elem,$max_level=15,$print_nice_stack=array()){
     //if (is_object($elem)) {$elem = object_to_array($elem);}
@@ -399,7 +402,7 @@ function print_nice($elem,$max_level=15,$print_nice_stack=array()){
                 $rgb=($color++%2)?"#8888BB":"#BBBBFF";
             }
             echo '<tr><td valign="top" style="width:40px;background-color:'.$rgb.';">';
-            echo '<strong>'.$k."</strong></td><td>";
+            echo '<strong>'.$k."</strong></td><td style='background-color:white;color:black'>";
             print_nice($v,$max_level,$print_nice_stack);
             echo "</td></tr>";
         }
@@ -476,7 +479,7 @@ function get_http_response_code($theURL) {
     return substr($headers[0], 9, 3);
 }
 
-function get_jobs($b_is_transcribed,$b_is_checked,$transcribed_id = null,$checked_id=null){
+function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,$transcribed_id = null,$checked_id=null){
     $db = DB::getInstance();
 
     if ($b_is_transcribed) {
@@ -490,7 +493,6 @@ function get_jobs($b_is_transcribed,$b_is_checked,$transcribed_id = null,$checke
     } else {
         $checked_op = 'IS';
     }
-
 
 
 
@@ -511,17 +513,25 @@ function get_jobs($b_is_transcribed,$b_is_checked,$transcribed_id = null,$checke
         $where_users = "AND {$where_users}";
     }
 
+    $where_stuff = "j.transcriber_user_id {$transcribed_op} null AND j.checker_user_id {$checked_op} null {$where_users}";
+
+    if ($jobid) {
+        $jobid = intval($jobid);
+        $where_stuff = " j.id = {$jobid} ";
+    }
+
+
 
     $query = $db->query( "
         select 
           j.id, j.client_id, j.profile_id, j.is_initialized,
           j.transcriber_user_id, j.checker_user_id,
 
-          UNIX_TIMESTAMP(j.created_at) as created_timestamp,
-          UNIX_TIMESTAMP(j.modified_at) as modified_timestamp,
-          UNIX_TIMESTAMP(j.uploaded_at) as uploaded_timestamp,
-          UNIX_TIMESTAMP(j.transcribed_at) as transcribed_timestamp,
-          UNIX_TIMESTAMP(j.checked_at) as checked_timestamp,
+          j.created_at as created_timestamp,
+          j.modified_at as modified_timestamp,
+          j.uploaded_at as uploaded_timestamp,
+          j.transcribed_at as transcribed_timestamp,
+          j.checked_at as checked_timestamp,
 
           j.uploader_email, j.uploader_lname,
           j.uploader_fname, 
@@ -531,20 +541,24 @@ function get_jobs($b_is_transcribed,$b_is_checked,$transcribed_id = null,$checke
           j.cell_phone, j.fax, j.skype,
           utrans.id as utrans_id,utrans.email as utrans_email, utrans.fname as utrans_fname, utrans.lname as utrans_lname,
           uchecks.id as uchecks_id,uchecks.email as uchecks_email, uchecks.fname as uchecks_fname, uchecks.lname as uchecks_lname,
+
           org_side_a.id as org_side_a_id,org_side_a.image_url as org_side_a_url , org_side_a.image_height  as org_side_a_height, org_side_a.image_width as org_side_a_width,
+
           org_side_b.id as org_side_b_id,org_side_b.image_url as org_side_b_url , org_side_b.image_height  as org_side_b_height, org_side_b.image_width as org_side_b_width,
+
           edit_side_a.id as edit_side_a_id,edit_side_a.image_url as edit_side_a_url , edit_side_a.image_height  as edit_side_a_height, edit_side_a.image_width as edit_side_a_width,
+
           edit_side_b.id as edit_side_b_id,edit_side_b.image_url as edit_side_b_url , edit_side_b.image_height  as edit_side_b_height, edit_side_b.image_width as edit_side_b_width
 
         from ht_jobs j
           left join users utrans ON utrans.id = j.transcriber_user_id
           left join users uchecks ON uchecks.id = j.checker_user_id
           left join ht_images org_side_a ON org_side_a.ht_job_id = j.id AND org_side_a.side = 0 AND org_side_a.is_edited=0
-          left join ht_images org_side_b ON org_side_b.ht_job_id = j.id AND org_side_b.side = 0 AND org_side_b.is_edited=0
+          left join ht_images org_side_b ON org_side_b.ht_job_id = j.id AND org_side_b.side = 1 AND org_side_b.is_edited=0
           left join ht_images edit_side_a ON edit_side_a.ht_job_id = j.id AND edit_side_a.side = 0 AND edit_side_a.is_edited=1
-          left join ht_images edit_side_b ON edit_side_b.ht_job_id = j.id AND edit_side_b.side = 0 AND edit_side_b.is_edited=1
+          left join ht_images edit_side_b ON edit_side_b.ht_job_id = j.id AND edit_side_b.side = 1 AND edit_side_b.is_edited=1
 
-        where j.transcriber_user_id {$transcribed_op} null AND j.checker_user_id {$checked_op} null AND j.is_initialized = 1 {$where_users}
+        where {$where_stuff} AND j.is_initialized = 1
     ",[]);
 
     $results = $query->results();
