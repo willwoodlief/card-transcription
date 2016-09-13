@@ -12,7 +12,7 @@ if ($settings->site_offline==1){die("The site is currently offline.");}?>
     <div class="container-fluid">
         <!-- Page Heading -->
         <div class="row">
-            <div class="col-xs-12 col-sm-10 col-sm-offset-2 col-md-offset-1 col-md-9 col-lg-offset-1 col-lg-8 " >
+            <div class="col-xs-12 col-sm-11 col-sm-offset-1 col-md-offset-1 col-md-9 col-lg-offset-1 col-lg-8 " >
                 <div class="panel panel-primary">
                     <div class="panel-heading">
                         <h3 class="panel-title">Transcriptions Done</h3>
@@ -25,6 +25,10 @@ if ($settings->site_offline==1){die("The site is currently offline.");}?>
                     </div>
                 </div>
 
+            </div>
+
+            <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2  text-center">
+                <button id = "start-notifications" type="button" class="btn btn-info btn-lg center-block">Notifications</button>
             </div>
         </div>
         <!-- Content goes here -->
@@ -40,7 +44,9 @@ if ($settings->site_offline==1){die("The site is currently offline.");}?>
 <?php require_once $abs_us_root.$us_url_root.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
 
 <!-- Place any per-page javascript here -->
+<script src="../users/js/plugins/notify.js/dist/notify.js"></script>
 <script src="js/load_job_panel.js"></script>
 <script src="js/check_job_feed.js"></script>
+<script src="js/count_new_jobs.js"></script>
 
 <?php require_once $abs_us_root.$us_url_root.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>

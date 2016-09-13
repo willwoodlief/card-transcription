@@ -1,0 +1,43 @@
+{
+  "name": "notifyjs",
+  "version": "2.0.3",
+  "description": "A handy wrapper for the Web Notifications API",
+  "main": "dist/notify.js",
+  "devDependencies": {
+    "eslint": "^2.7.0",
+    "jasmine-core": "^2.3.4",
+    "jspm": "^0.17.0-beta.12",
+    "karma": "^0.13.10",
+    "karma-firefox-launcher": "^0.1.6",
+    "karma-jasmine": "^0.3.6",
+    "sinon": "^1.16.1"
+  },
+  "jspm": {
+    "name": "notifyjs",
+    "devDependencies": {
+      "plugin-babel": "npm:systemjs-plugin-babel@^0.0.9"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexgibson/notify.js.git"
+  },
+  "keywords": [
+    "web",
+    "notification",
+    "nofity"
+  ],
+  "author": "Alex Gibson",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/alexgibson/notify.js/issues"
+  },
+  "scripts": {
+    "prebuild": "npm run lint",
+    "build": "jspm build notifyjs dist/notify.js --format umd --global-name Notify --skip-source-maps",
+    "pretest": "npm run build",
+    "test": "karma start --browsers Firefox --single-run",
+    "prepublish": "jspm install && npm run build",
+    "lint": "eslint src/notify.js"
+  }
+}
