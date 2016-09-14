@@ -91,7 +91,7 @@ if(!empty($_POST['transcribe'])) {
     $fields_to_check = [
         'fname','mname','lname','suffix',
         'designations','address','city','state','zip',
-        'email','website','phone','cell_phone','fax','skype'];
+        'email','website','phone','cell_phone','fax','skype','other_category','other_value'];
 
     $fields = [];
 
@@ -270,6 +270,16 @@ if(!empty($_POST['transcribe'])) {
                         <div class="form-group">
                             <label for="skype">Skype</label>
                             <input type="text" class="form-control" name="skype" id="skype" value="<?=$job->transcribe->skype ?>">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="other_category">Other Category</label>
+                            <input type="text" class="form-control" name="other_category" id="other_category" value="<?=$job->transcribe->other_category ?>">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="other_value">Other Value</label>
+                            <input type="text" class="form-control" name="other_value" id="other_value" value="<?=$job->transcribe->other_value ?>">
                         </div>
 
                         <input type="hidden" name="csrf" value="<?=Token::generate();?>" />

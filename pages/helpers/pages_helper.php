@@ -538,7 +538,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,$transcribe
           
           j.fname, j.mname, j.lname, j.suffix, j.designations,
           j.address, j.city, j.state, j.zip, j.email, j.website, j.phone,
-          j.cell_phone, j.fax, j.skype,
+          j.cell_phone, j.fax, j.skype,j.other_category, j.other_value,
           utrans.id as utrans_id,utrans.email as utrans_email, utrans.fname as utrans_fname, utrans.lname as utrans_lname,
           uchecks.id as uchecks_id,uchecks.email as uchecks_email, uchecks.fname as uchecks_fname, uchecks.lname as uchecks_lname,
 
@@ -584,7 +584,8 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,$transcribe
             'fname' => $rec->fname, 'mname' => $rec->mname, 'lname' => $rec->lname, 'suffix' => $rec->suffix, 'designations' => $rec->designations,
             'address' => $rec->address, 'city' => $rec->city, 'state' => $rec->state, 'zip' => $rec->zip, 'email' => $rec->email,
             'website' => $rec->website, 'phone' => $rec->phone,
-            'cell_phone' => $rec->cell_phone, 'fax' => $rec->fax, 'skype' => $rec->skype
+            'cell_phone' => $rec->cell_phone, 'fax' => $rec->fax, 'skype' => $rec->skype,'other_category'=> $rec->other_category,
+            'other_value'=>$rec->other_value
         ];
         
         $translater = [

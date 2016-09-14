@@ -14,7 +14,7 @@
 !/tmp/local_uploads/.keep
 
 /users/js/plugins/darkroomjs/node_modules/*
-
+/scratch/snippits.php
 
 # Ignore application configuration
 /users/private_init.php
