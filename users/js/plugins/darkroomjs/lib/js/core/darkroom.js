@@ -313,7 +313,7 @@ Darkroom.prototype = {
       lockScalingY: true,
       lockUniScaling: true,
       hasControls: false,
-      hasBorders: false,
+      hasBorders: false
     });
 
     this.sourceCanvas.add(this.sourceImage);
