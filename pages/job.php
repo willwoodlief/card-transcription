@@ -6,6 +6,16 @@ require_once $abs_us_root.$us_url_root.'users/includes/header_not_closed.php';
 
 <link rel="stylesheet" href="../users/js/plugins/darkroomjs/build/darkroom.css">
 
+<style>
+    .enlarge {
+        transform: scale(3);
+        position:absolute;
+        top:275px;
+        left:100px;
+        z-index: 999;
+    }
+</style>
+
 </head>
 <body>
 <?php
@@ -275,11 +285,20 @@ if(!empty($_POST['transcribe'])) {
                             <div class="panel-heading">
                                 <div class="row">
                                     <div class="col-xs-6 col-md-6">
-                                        Side A (edited version or orginal if never edited)
+                                        Side A (edited version or orginal if never edited) <br>
+                                        When the image is expanded any click on it will make it normal sized again
                                     </div>
 
-                                    <div class="col-xs-6 col-md-3">
-                                        <button id = "revert-edit-a" type="button" class="btn btn-warning" onclick="reload_a();">Revert to Original</button>
+                                    <div class="col-xs-6 col-md-6">
+
+                                        <div class="btn-group btn-group-justified">
+                                            <div class="btn-group">
+                                                <button id = "revert-edit-a" type="button" class="btn btn-warning" onclick="reload_a();">Revert to Original</button>
+                                            </div>
+                                            <div class="btn-group">
+                                                <button id = "expand-edit-a" type="button" onclick="expand_a();" class="btn btn-default ">Expand</button>
+                                            </div>
+                                        </div>
                                     </div>
                                  </div>
 
@@ -300,7 +319,7 @@ if(!empty($_POST['transcribe'])) {
                                     if ($height > $max) {$max = $height;}
                                     if ($max < 400) { $max = 400;}
                                 ?>
-                                <iframe src="edit_job_image.php?jobid=<?= $job->job->id; ?>&side=0&force_original=0" name="side-a-edit" id="side-a-edit" height="<?= $max + 50 ?>px" width="<?= $max + 70 ?>px" style="border:0 none;"></iframe>
+                                <iframe src="edit_job_image.php?jobid=<?= $job->job->id; ?>&side=0&force_original=0" name="side-a-edit" id="side-a-edit" height="<?= $max + 50 ?>px" width="<?= $max + 70 ?>px" style=";border:0 none;"></iframe>
                             </div>
                         </div>
 
@@ -309,11 +328,21 @@ if(!empty($_POST['transcribe'])) {
                             <div class="panel-heading">
                                 <div class="row">
                                     <div class="col-xs-6 col-md-6">
-                                        Side B (edited version or orginal if never edited)
+                                        Side B (edited version or orginal if never edited)<br>
+                                        When the image is expanded any click on it will make it normal sized again
                                     </div>
 
-                                    <div class="col-xs-6 col-md-3">
-                                        <button id = "revert-edit-b" type="button" onclick="reload_b();" class="btn btn-warning">Revert to Original</button>
+                                    <div class="col-xs-6 col-md-6">
+                                        <div class="btn-group btn-group-justified">
+                                            <div class="btn-group">
+                                                <button id = "revert-edit-b" type="button" onclick="reload_b();" class="btn btn-warning">Revert to Original</button>
+                                            </div>
+                                            <div class="btn-group">
+                                                <button id = "expand-edit-b" type="button" onclick="expand_b();" class="btn btn-default ">Expand</button>
+                                            </div>
+                                        </div>
+
+
                                     </div>
                                 </div>
 
@@ -378,6 +407,11 @@ if(!empty($_POST['transcribe'])) {
 <script src="js/auto_zip.js"></script>
 <script>
     function reload_a() {
+        if (confirm("This will replace the edited image with the original image, but changes will not take affect until you save it again.") == true) {
+
+        } else {
+           return;
+        }
         var new_height = $('#side-a-origonal').attr('height');
         var new_width = $('#side-a-origonal').attr('width');
         var max = new_height;
@@ -392,6 +426,11 @@ if(!empty($_POST['transcribe'])) {
     }
 
     function reload_b() {
+        if (confirm("This will replace the edited image with the original image, but changes will not take affect until you save it again.") == true) {
+
+        } else {
+            return;
+        }
         var new_height = $('#side-b-origonal').attr('height');
         var new_width = $('#side-b-origonal').attr('width');
         var max = new_height;
@@ -404,6 +443,25 @@ if(!empty($_POST['transcribe'])) {
         $('#side-b-edit').attr( 'src', "edit_job_image.php?jobid=<?= $job->job->id; ?>&side=1&force_original=1").
             width(new_width).height(new_height);
     }
+
+
+    function expand_b() {
+        var iframe = $('#side-b-edit');
+        iframe.addClass('enlarge');
+    }
+
+    function expand_a() {
+        var iframe = $('#side-a-edit');
+        iframe.addClass('enlarge');
+    }
+
+    function get_iframe_clicks(frame) {
+         var iframe = $('#'+frame);
+         // alert(iframe.attr( 'src'));
+          iframe.removeClass('enlarge');
+    }
+
+
 </script>
 
 

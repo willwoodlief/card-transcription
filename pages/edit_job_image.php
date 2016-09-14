@@ -175,6 +175,10 @@ $base64 = getDataURI($body,$mime_type);
                 }
             );
     }
+
+    $(document).click(function() {
+        window.parent.get_iframe_clicks(window.frameElement.id);
+    });
 </script>
 
 
