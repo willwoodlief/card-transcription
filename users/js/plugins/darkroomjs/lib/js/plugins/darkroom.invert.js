@@ -6,8 +6,30 @@ var Invert = Darkroom.Transformation.extend({
 
     image.filters.push(new fabric.Image.filters.Invert());
 
-      image.applyFilters();
+      image.applyFilters(canvas.renderAll.bind(canvas));
+      var angle = (image.getAngle() + 180) % 360;
+   //   image.rotate(angle);
+
+      var width, height;
+      height = Math.abs(image.getWidth()*(Math.sin(angle*Math.PI/180)))+Math.abs(image.getHeight()*(Math.cos(angle*Math.PI/180)));
+      width = Math.abs(image.getHeight()*(Math.sin(angle*Math.PI/180)))+Math.abs(image.getWidth()*(Math.cos(angle*Math.PI/180)));
+
+      canvas.setWidth(width);
+      canvas.setHeight(height);
+
+      canvas.centerObject(image);
+      image.setCoords();
       canvas.renderAll();
+      //alert(window.frameElement.getAttribute("id"));
+
+      var b = $('div .darkroom-image-container');
+      var c = $('div .darkroom-source-container');
+
+      b.hide();
+      c.show();
+
+      next(image);
+
 
 
 
@@ -23,7 +45,7 @@ var Invert = Darkroom.Transformation.extend({
 
         console.log('applied invert');
 
-    next();
+
   }
 });
 
@@ -43,6 +65,8 @@ Darkroom.plugins['invert'] = Darkroom.Plugin.extend({
 
   doInvert: function doInvert() {
       this.invert();
+
+      this.darkroom.refresh();
   },
 
 

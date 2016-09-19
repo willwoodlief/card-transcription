@@ -6,8 +6,18 @@ var GrayScale = Darkroom.Transformation.extend({
 
     image.filters.push(new fabric.Image.filters.Grayscale());
 
-      image.applyFilters();
+      image.applyFilters(canvas.renderAll.bind(canvas));
       canvas.renderAll();
+
+     // alert(window.frameElement.getAttribute("id"));
+
+      var b = $('div .darkroom-image-container');
+      var c = $('div .darkroom-source-container');
+
+      b.hide();
+      c.show();
+
+      next(image);
 
 
 
@@ -16,14 +26,8 @@ var GrayScale = Darkroom.Transformation.extend({
       //image.applyFilters(canvas.renderAll.bind(canvas));
 
 
-
-
-
-
-
         console.log('applied gray');
 
-    next();
   }
 });
 

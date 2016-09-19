@@ -456,6 +456,12 @@ Darkroom.plugins['crop'] = Darkroom.Plugin.extend({
   },
 
   toggleCrop: function() {
+      var b = $('div .darkroom-image-container');
+      var c = $('div .darkroom-source-container');
+
+      c.hide();
+      b.show();
+
     if (!this.hasFocus())
       this.requireFocus();
     else
