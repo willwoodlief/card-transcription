@@ -1,8 +1,10 @@
 <?php
 require_once '../users/init.php';
 require_once $abs_us_root.$us_url_root.'lib/aws/aws-autoloader.php';
+require_once $abs_us_root.$us_url_root.'lib/SimpleImage/src/abeautifulsite/SimpleImage.php';
 require_once $abs_us_root.$us_url_root.'users/helpers/helpers.php';
 require_once $abs_us_root.$us_url_root.'pages/helpers/pages_helper.php';
+require_once $abs_us_root.$us_url_root.'pages/helpers/mime_type.php';
 
 $db = DB::getInstance();
 $settingsQ = $db->query("Select * FROM settings");
@@ -41,11 +43,10 @@ if ($side_int) {
     $image_width =  $the_job->images->edit_side_b->width;
     $image_height =  $the_job->images->edit_side_b->height;
 
-    if (!$image_url || $force_origonal) {
-        $image_url = $the_job->images->org_side_b->url;
-        $image_id = $the_job->images->org_side_b->id;
-        $image_width =  $the_job->images->org_side_b->width;
-        $image_height =  $the_job->images->org_side_b->height;
+    if ( $force_origonal) {
+        $ret = restart_edit($jobid,$side_int);
+        $image_width =  $ret['image_width'];
+        $image_height =  $ret['image_height'];
     }
 
 } else {
@@ -54,11 +55,10 @@ if ($side_int) {
     $image_width =  $the_job->images->edit_side_a->width;
     $image_height =  $the_job->images->edit_side_a->height;
 
-    if (!$image_url || $force_origonal) {
-        $image_url = $the_job->images->org_side_a->url;
-        $image_id = $the_job->images->org_side_a->id;
-        $image_width =  $the_job->images->org_side_a->width;
-        $image_height =  $the_job->images->org_side_a->height;
+    if ( $force_origonal) {
+        $ret = restart_edit($jobid,$side_int);
+        $image_width =  $ret['image_width'];
+        $image_height =  $ret['image_height'];
     }
 }
 

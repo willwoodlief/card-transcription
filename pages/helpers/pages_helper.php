@@ -112,6 +112,12 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
      $date_string = date("Ymd_H:i");
 
 
+     $eback_card_path = $row->eback_path;
+     $eback_file_ext = $row->eback_file_type;
+     $efront_card_path = $row->efront_path;
+     $efront_file_ext = $row->efront_file_type;
+
+
      #test to make sure the file paths are there
      if (!is_readable($front_card_path)) {
          $status_to_post.= "cannot get {$front_card_path}";
@@ -130,6 +136,14 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
      $back_key_name = "preprocessing/preprocess-{$waiting_id}b-id{$client_id}-p{$profile_id}-{$date_string}-guid={$guid}.{$back_file_ext}";
      $back_mime_type = mime_type($back_card_path);
 
+
+     $efront_key_name = "preprocessing/preprocess-e-{$waiting_id}a-id{$client_id}-p{$profile_id}-{$date_string}-guid={$guid}.{$efront_file_ext}";
+     $efront_mime_type  = mime_type($efront_card_path);
+
+
+     $eback_key_name = "preprocessing/preprocess-e-{$waiting_id}b-id{$client_id}-p{$profile_id}-{$date_string}-guid={$guid}.{$eback_file_ext}";
+
+     $eback_mime_type = mime_type($eback_card_path);
 
      $status_to_post = '';
      try {
@@ -180,6 +194,55 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
          return  $status_to_post; //writes status to row in finally block
      }
 
+     // add in the edit versions of the images
+
+     try {
+         $result = @$s3Client->putObject(array(
+             'Bucket' => $to_bucket_name,
+             'Key' => $eback_key_name,
+             'SourceFile' => $eback_card_path,
+             'ContentType' => $eback_mime_type,
+             'ACL' => 'public-read',
+             //'StorageClass' => 'REDUCED_REDUNDANCY',
+             'Metadata' => array(
+                 'client_id' => $client_id,
+                 'profile_id' => $profile_id
+             )
+         ));
+         // Print the URL to the object.
+         $status_to_post .= ', '.$result['ObjectURL'] ;
+     } catch (S3Exception $e) {
+         publish_to_sns('could not add edited back image to  bucket: ','page died at upload_from_waiting_row because
+     it could not put image to bucket. Error message was '.  $e->getMessage());
+         $status_to_post .= ', '.$e->getMessage();
+         return  $status_to_post; //writes status to row in finally block
+     }
+
+
+     try {
+         $result = @$s3Client->putObject(array(
+             'Bucket' => $to_bucket_name,
+             'Key' => $efront_key_name,
+             'SourceFile' => $efront_card_path,
+             'ContentType' => $efront_mime_type,
+             'ACL' => 'public-read',
+             //    'StorageClass' => 'REDUCED_REDUNDANCY',
+             'Metadata' => array(
+                 'client_id' => $client_id,
+                 'profile_id' => $profile_id
+             )
+         ));
+
+         // Print the URL to the object.
+         $status_to_post .= ', '.$result['ObjectURL'] ;
+     } catch (S3Exception $e) {
+         publish_to_sns('could not add fronted edited image to  bucket: ','page died at upload_from_waiting_row because
+     it could not put image to bucket. Error message was '.  $e->getMessage());
+         $status_to_post .= ', '.$e->getMessage();
+         return  $status_to_post; //writes status to row in finally block
+     }
+
+
      //echo $result['ObjectURL'];.
 
      #now send message to website
@@ -187,16 +250,33 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
      $msg = [
          'client_id' => $client_id,
          'profile_id' => $profile_id,
+
+
          'front' => $front_key_name,
-         'back' => $back_key_name,
-         'timestamp' => time(),
-         'bucket' => $to_bucket_name,
+         'front_type' => $row->front_file_type,
          'front_width'  => $row->front_width,
          'front_height'  => $row->front_height,
+
+         'back' => $back_key_name,
+         'back_type' => $row->back_file_type,
          'back_width'  => $row->back_width,
          'back_height'  => $row->back_height,
-         'front_type' => $row->front_file_type,
-         'back_type' => $row->back_file_type,
+
+
+         'efront' => $efront_key_name,
+         'efront_type' => $row->efront_file_type,
+         'efront_width'  => $row->efront_width,
+         'efront_height'  => $row->efront_height,
+
+         'eback' => $eback_key_name,
+         'eback_type' => $row->eback_file_type,
+         'eback_width'  => $row->eback_width,
+         'eback_height'  => $row->eback_height,
+
+
+
+         'timestamp' => time(),
+         'bucket' => $to_bucket_name,
          'uploader_email' => $row->uploader_email,
          'uploader_lname' => $row->uploader_lname,
          'uploader_fname' => $row->uploader_fname,
@@ -217,6 +297,192 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
      $db->update('ht_waiting', $row->id, ['upload_result' => $status_to_post, 'modified_at' => time()]);
  }
 
+
+
+}
+
+function restart_edit($jobid,$side) {
+    //get the original image bucket and key for that side, resise it and overwrite the edited image
+    global $settings;
+    $db = DB::getInstance();
+
+    $query = $db->query("select id,client_id,profile_id
+                          from ht_jobs where id = ? ",[$jobid] );
+
+    if ($db->count() == 0) {
+        throw  new Exception("Could not find job in database to repleace job for job of $jobid and side of $sideT [$side] and not edited");
+    }
+    $jobQ = $query->first();
+    $client_id = $jobQ->client_id;
+    $profile_id = $jobQ->profile_id;
+
+
+
+    $sideT = 0;
+    $side_letter = 'a';
+    if ($side == 1 || (strcasecmp($side, 'b') == 0) ) {
+        $sideT = 1;
+        $side_letter = 'b';
+    }
+    $query = $db->query("select bucket_name,key_name,image_height,image_width ,image_type
+                          from ht_images where ht_job_id = ? AND is_edited =0 AND side = ?",[$jobid,$sideT] );
+
+    if ($db->count() == 0) {
+        throw  new Exception("Could not find image in database for job of $jobid and side of $sideT [$side] and not edited");
+    }
+    $img = $query->first();
+    $bucket_from = $img->bucket_name;
+    $key_from = $img->key_name;
+
+
+    $query = $db->query("select id, bucket_name,key_name
+                          from ht_images where ht_job_id = ? AND is_edited =1 AND side = ?",[$jobid,$sideT] );
+
+    if ($db->count() == 0) {
+        throw  new Exception("Could not find image in database for job of $jobid and side of $sideT [$side] and edited");
+    }
+    $img = $query->first();
+    $ht_image_id = $img->id;
+    $bucket_to = $img->bucket_name;
+    $key_to = $img->key_name;
+
+    #download the original image to here so we can resize it
+
+    $sharedConfig = [
+        'region'  => getenv('AWS_REGION'),
+        'version' => 'latest'
+    ];
+
+// Create an SDK class used to share configuration across clients.
+    $sdk = new Aws\Sdk($sharedConfig);
+
+// Use an Aws\Sdk class to create the S3Client object.
+    $s3Client = $sdk->createS3();
+
+    // Save object to a temp file.
+    $file = tmpfile();
+    $path = stream_get_meta_data($file)['uri']; // eg: /tmp/phpFx0513a
+
+    try {
+         $s3Client->getObject(array(
+            'Bucket' => $bucket_from,
+            'Key'    => $key_from,
+            'SaveAs' => $path
+        ));
+
+    } catch (S3Exception $e) {
+        publish_to_sns('could not download image from  bucket: ','in restart_edit an exception was thrown because it could not download an image.
+         Error message was '.  $e->getMessage());
+        throw $e;
+    }
+
+    #now change the image size of the original downloaded copy
+
+    try {
+        $imgD = new abeautifulsite\SimpleImage($path);
+        $imgD->fit_to_width(600)->save();
+        $info = getimagesize($path);
+        $ewidth = $info[0];
+        $eheight = $info[1];
+        $mime_type = $info['mime'];
+        $eType =  preg_replace('/^image\//', '', $info['mime']);
+
+
+        /*
+         * array(
+//      width => 320,
+//      height => 200,
+//      orientation => ['portrait', 'landscape', 'square'],
+//      exif => array(...),
+//      mime => ['image/jpeg', 'image/gif', 'image/png'],
+//      format => ['jpeg', 'gif', 'png']
+//  )
+         * */
+
+    } catch(Exception $e) {
+
+        publish_to_sns('could not resize image',
+            "the image could not be resized after it was downloaded to the server, in restart edit ". $e->getMessage());
+        throw new Exception ('Error resizing image when replacing edited image: ' . $e->getMessage());
+    }
+
+
+    #delete older key
+
+
+
+    try {
+        @$s3Client->deleteObject(array(
+            'Bucket' => $bucket_to,
+            'Key'    => $key_to
+        ));
+
+    } catch (S3Exception $e) {
+        publish_to_sns('could not deleted older edit image from  bucket: ','could not replace edited image because
+     it could not delete the older image from bucket. Error message was '.  $e->getMessage());
+
+        throw new Exception('Error replacing edited image on bucket: ' . $e->getMessage());
+    }
+
+
+    #recaluclate key, and get the new url
+
+    $uploaded_date_string = date('Ymd',time());
+    $new_key_name = "e_img{$jobid}{$side_letter}_id{$client_id}_p{$profile_id}_{$uploaded_date_string}.{$eType}";
+
+    #upload to bucket to replace other edited image
+
+
+    try {
+         @$s3Client->putObject(array(
+            'Bucket' => $bucket_to,
+            'Key' => $new_key_name,
+            'SourceFile' => $path,
+            'ContentType' => $mime_type,
+            'ACL' => 'public-read',
+            //    'StorageClass' => 'REDUCED_REDUNDANCY',
+            'Metadata' => array(
+                'job_id' => $jobid,
+                'client_id' => $client_id,
+                'profile_id' => $profile_id
+            )
+        ));
+
+    } catch (S3Exception $e) {
+        publish_to_sns('could not add image to  bucket: ','could not replace edited image because
+     it could not put image to bucket. Error message was '.  $e->getMessage());
+
+        throw new Exception('Error replacing edited image on bucket: ' . $e->getMessage());
+    }
+
+    $edit_url = null;
+//get the image url, since we want to be flexable in key schemes, always get the new image url
+    try {
+        $edit_url = @$s3Client->getObjectUrl($bucket_to, $key_to);
+    } catch (S3Exception $e) {
+        $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
+        publish_to_sns('could not get image url from bucket: ','page died at save_image because
+     it could get image url from bucket. Error message was '.  $e->getMessage());
+        printErrorJSONAndDie('could not get  image url: '. $e->getMessage());
+
+    }
+
+    #update the edited image with the new width and height
+    $updated_dimentions = [
+        'image_width' =>$ewidth,
+        'image_height' =>$eheight,
+        'modified_at'=>time(),
+        'image_url'=>$edit_url,
+        'image_type'=>$eType,
+        'key_name' => $new_key_name,
+    ];
+
+
+
+    $db->update('ht_images',$ht_image_id,$updated_dimentions);
+
+
+    return $updated_dimentions;
 
 
 }
@@ -251,6 +517,9 @@ function add_waiting($client_id,$profile_id,$tmppath_image_front,$tmppath_image_
     $front_path = $local_folder . '/' . $front_name;
     $back_path = $local_folder . '/' . $back_name;
 
+    $efront_path = $local_folder . '/e_' . $front_name;
+    $eback_path = $local_folder . '/e_' . $back_name;
+
 
 
     mkdir_r($local_folder,0777);
@@ -259,19 +528,52 @@ function add_waiting($client_id,$profile_id,$tmppath_image_front,$tmppath_image_
     copy($tmppath_image_back,$back_path);
     chmod($back_path,0666);
 
+    copy($tmppath_image_front,$efront_path);
+    chmod($efront_path,0666);
+    copy($tmppath_image_back,$eback_path);
+    chmod($eback_path,0666);
+
+    //get dimentions for the two originals
     list($front_width, $front_height) = getimagesize($front_path);
     list($back_width, $back_height) = getimagesize($back_path);
+
+    //shift e images to have a width of 600 px
+
+    try {
+        $img = new abeautifulsite\SimpleImage($efront_path);
+        $img->fit_to_width(600)->save();
+        list($efront_width, $efront_height) = getimagesize($efront_path);
+    } catch(Exception $e) {
+        throw new Exception ('Error resizing front side: ' . $e->getMessage());
+    }
+
+    try {
+        $img = new abeautifulsite\SimpleImage($eback_path);
+        $img->fit_to_width(600)->save();
+        list($eback_width, $eback_height) = getimagesize($eback_path);
+    } catch(Exception $e) {
+        throw new Exception( 'Error resizing back side: ' . $e->getMessage());
+    }
 
     #update record to waiting
     $fields=array(
         'front_path'=> $front_path,
-        'back_path'=> $back_path,
         'front_file_type'  => $front_img_type,
-        'back_file_type'  => $back_img_type,
         'front_width'  => $front_width,
         'front_height'  => $front_height,
+        'back_path'=> $back_path,
+        'back_file_type'  => $back_img_type,
         'back_width'  => $back_width,
         'back_height'  => $back_height,
+
+        'efront_path'=> $efront_path,
+        'efront_file_type'  => $front_img_type, //same image type
+        'efront_width'  => $efront_width,
+        'efront_height'  => $efront_height,
+        'eback_path'=> $eback_path,
+        'eback_file_type'  => $back_img_type,
+        'eback_width'  => $eback_width,
+        'eback_height'  => $eback_height,
     );
     $db->update('ht_waiting',$theNewId,$fields);
 
@@ -721,7 +1023,7 @@ function canEditJob($user,$jobid) {
     $time_limit = $settings->view_timeout_seconds;
     $userid = $user->data()->id;
     $db = DB::getInstance();
-    $jobQ = $db->query("Select id FROM ht_jobs where (viewing_user_id = $userid || viewing_user_id is NULL) AND ( ($time_limit <=  UNIX_TIMESTAMP() - viewing_user_at) ||  viewing_user_at is NULL) AND (id = ? );",[$jobid]);
+    $db->query("Select id FROM ht_jobs where (viewing_user_id = $userid || viewing_user_id is NULL) AND ( ($time_limit <=  UNIX_TIMESTAMP() - viewing_user_at) ||  viewing_user_at is NULL) AND (id = ? );",[$jobid]);
     if ( ( !$db->count() ) || ($db->count() <= 0)) {
         return false;
     } else {

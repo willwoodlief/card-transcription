@@ -38,8 +38,8 @@ function load_job_panel(data,flag) {
         '<span class="job-uploaded-date">'+
         human_uploaded_dt +
         '</span>' +
-        '<img src="'+job.images.org_side_a.url+'"  class="img-side-preview">' +
-        '<img src="'+job.images.org_side_b.url+'"  class="img-side-preview">' +
+        '<img src="'+job.images.edit_side_a.url+'"  class="img-side-preview">' +
+        '<img src="'+job.images.edit_side_b.url+'"  class="img-side-preview">' +
         cspan +
         '</li>');
         joblist.append(li);

@@ -27,7 +27,7 @@ if (empty($img_info)) {
     printErrorJSONAndDie('cannot find image');
 }
 $img = $img_info->first();
-print "the first image is {$img->id}\n";
+//print "the first image is {$img->id}\n";
 
 if ($img->is_edited == 0) {
 
@@ -45,7 +45,7 @@ if ($img->is_edited == 0) {
     }
 
 }
-print "the second image is {$img->id}\n";
+//print "the second image is {$img->id}\n";
 
 $the_job = get_jobs($img->ht_job_id);
 
@@ -128,6 +128,7 @@ try {
     printErrorJSONAndDie('could not add  image to bucket: '. $e->getMessage());
 }
 
+$edit_url = null;
 //get the image url, since we want to be flexable in key schemes, always get the new image url
 try {
     $edit_url = @$s3Client->getObjectUrl($settings->s3_bucket_name, $key);
@@ -136,14 +137,22 @@ try {
     publish_to_sns('could not get image url from bucket: ','page died at save_image because
      it could get image url from bucket. Error message was '.  $e->getMessage());
     printErrorJSONAndDie('could not get  image url: '. $e->getMessage());
+
 }
 
 
 //add image to the database, or update it
 if ($img->is_edited == 1) {
     //update the img with the modified at
-    print "updating image is {$img->id} = {$imgid}\n";
-    $db->update('ht_images', $img->id, ['modified_at'=> time(),'image_height' => $front_height,'image_width'=>$front_width,'image_type'=>'png']);
+   # print "updating image is {$img->id} = {$imgid}\n";
+    $db->update('ht_images', $img->id, [
+            'modified_at'=> time(),
+            'image_height' => $front_height,
+            'image_width'=>$front_width,
+            'image_type'=>'png',
+            'key_name' => $key,
+            'image_url' => $edit_url
+    ]);
     $new_img_id = $img->id;
 }else {
     //create new img record

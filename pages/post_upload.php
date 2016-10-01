@@ -79,6 +79,17 @@ $back_type = $_POST['back_type'];
 $back_width = $_POST['back_width'];
 $back_height = $_POST['back_height'];
 
+
+$efront_key_name = $_POST['efront'];
+$efront_type = $_POST['efront_type'];
+$efront_width = $_POST['efront_width'];
+$efront_height = $_POST['efront_height'];
+
+$eback_key_name = $_POST['eback'];
+$eback_type = $_POST['eback_type'];
+$eback_width = $_POST['eback_width'];
+$eback_height = $_POST['eback_height'];
+
 $updatetime =  $_POST['uploaded_at'];
 $uploaded_date_string = date('Ymd',$updatetime);
 $clientID = $_POST['client_id'];
@@ -86,6 +97,9 @@ $profileID = $_POST['profile_id'];
 //img1234567a_id0268_p02_YYYYMMDD.jpg
 $new_front_key_name = "img{$jobid}a_id{$clientID}_p{$profileID}_{$uploaded_date_string}.{$front_type}";
 $new_back_key_name = "img{$jobid}b_id{$clientID}_p{$profileID}_{$uploaded_date_string}.{$back_type}";
+
+$enew_front_key_name = "e_img{$jobid}a_id{$clientID}_p{$profileID}_{$uploaded_date_string}.{$efront_type}";
+$enew_back_key_name = "e_img{$jobid}b_id{$clientID}_p{$profileID}_{$uploaded_date_string}.{$eback_type}";
 
 try {
     @$s3Client->copyObject(array(
@@ -100,6 +114,7 @@ try {
     printErrorJSONAndDie('could not move front image in bucket: '. $e->getMessage());
 }
 
+$front_url = '';
 try {
     $front_url = @$s3Client->getObjectUrl($our_bucket, $new_front_key_name);
 } catch (S3Exception $e) {
@@ -122,6 +137,7 @@ try {
     printErrorJSONAndDie('could not move back image in bucket: '. $e->getMessage());
 }
 
+$back_url = '';
 try {
     $back_url = @$s3Client->getObjectUrl($our_bucket, $new_back_key_name);
 } catch (S3Exception $e) {
@@ -131,6 +147,62 @@ try {
 
     printErrorJSONAndDie('could not get back image url: '. $e->getMessage());
 }
+
+///////////////////////////////////////////////////////////////////////////////
+/////////////////////////// adding edited images to server bucket
+///////////////////////////////////////////////////////////////////////////////
+
+
+
+
+try {
+    @$s3Client->copyObject(array(
+        'Bucket'     => $our_bucket,
+        'Key'        => $enew_front_key_name,
+        'CopySource' => "{$their_bucket}/{$efront_key_name}",
+    ));
+} catch (S3Exception $e) {
+    $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
+    publish_to_sns('could not move front image in bucket: ','page died at post_upload because
+     it could not move the image from the bucket. Error message was '.  $e->getMessage());
+    printErrorJSONAndDie('could not move front image in bucket: '. $e->getMessage());
+}
+
+$efront_url = '';
+try {
+    $efront_url = @$s3Client->getObjectUrl($our_bucket, $enew_front_key_name);
+} catch (S3Exception $e) {
+    $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
+    publish_to_sns('could not get front image url from bucket: ','page died at post_upload because
+     it could not get information from the  image from the bucket. Error message was '.  $e->getMessage());
+    printErrorJSONAndDie('could not get front image url: '. $e->getMessage());
+}
+
+try {
+    @$s3Client->copyObject(array(
+        'Bucket'     => $our_bucket,
+        'Key'        => $enew_back_key_name,
+        'CopySource' => "{$their_bucket}/{$eback_key_name}",
+    ));
+} catch (S3Exception $e) {
+    $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
+    publish_to_sns('could not move back image in bucket: ','page died at post_upload because
+     it could not move the image from the bucket. Error message was '.  $e->getMessage());
+    printErrorJSONAndDie('could not move back image in bucket: '. $e->getMessage());
+}
+
+$eback_url = '';
+try {
+    $eback_url = @$s3Client->getObjectUrl($our_bucket, $enew_back_key_name);
+} catch (S3Exception $e) {
+    $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
+    publish_to_sns('could not get back image url from bucket: ','page died at post_upload because
+     it could not get information from the  image from the bucket. Error message was '.  $e->getMessage());
+
+    printErrorJSONAndDie('could not get back image url: '. $e->getMessage());
+}
+
+//////////////////////////////////////////////////////////
 
 
 
@@ -152,7 +224,7 @@ $fields=array(
 $what = $db->insert('ht_images',$fields);
 if (!$what) {
     $db->update('ht_jobs', $jobid, ['error_message' => $db->error()]);
-    printErrorJSONAndDie('could not create front image: '. $db->error());
+    printErrorJSONAndDie('could not create front image roww: '. $db->error());
 }
 
 $fields=array(
@@ -171,12 +243,52 @@ $fields=array(
 $what = $db->insert('ht_images',$fields);
 if (!$what) {
     $db->update('ht_jobs', $jobid, ['error_message' => $db->error(),'modified_at'=>time()]);
-    printErrorJSONAndDie('could not create back image: '. $db->error());
+    printErrorJSONAndDie('could not create back image row : '. $db->error());
 }
 
-/*
- *  `ht_job_id`, `side`, `image_type`, `bucket_name`, `key_name`, `image_url`, `image_height`, `image_width`
- */
+///////////////////////////////////////////////////
+//////////////////// Add edited images to image rows
+///////////////////////////////////////////////////
+$fields=array(
+    'ht_job_id' => $jobid,
+    'side' => 0,
+    'is_edited'=>1,
+    'image_type' => $efront_type,
+    'bucket_name' => $our_bucket,
+    'key_name' => $enew_front_key_name,
+    'image_url' => $efront_url,
+    'image_height' => $efront_height,
+    'image_width' => $efront_width,
+    'created_at' => time(),
+    'modified_at' => time()
+
+);
+$what = $db->insert('ht_images',$fields);
+if (!$what) {
+    $db->update('ht_jobs', $jobid, ['error_message' => $db->error()]);
+    printErrorJSONAndDie('could not create edit front image row: '. $db->error());
+}
+
+$fields=array(
+    'ht_job_id' => $jobid,
+    'side' => 1,
+    'is_edited'=>1,
+    'image_type' => $eback_type,
+    'bucket_name' => $our_bucket,
+    'key_name' => $enew_back_key_name,
+    'image_url' => $eback_url,
+    'image_height' => $eback_height,
+    'image_width' => $eback_width,
+    'created_at' => time(),
+    'modified_at' => time()
+
+);
+$what = $db->insert('ht_images',$fields);
+if (!$what) {
+    $db->update('ht_jobs', $jobid, ['error_message' => $db->error(),'modified_at'=>time()]);
+    printErrorJSONAndDie('could not create edit back image row: '. $db->error());
+}
+///////////////////////////////////////////////////////////
 
 //notifications can happen when they are logged in so this is all this call does
 // if got here then signal this in the job

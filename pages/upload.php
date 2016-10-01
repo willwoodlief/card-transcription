@@ -6,6 +6,7 @@ require_once $abs_us_root.$us_url_root.'users/includes/navigation.php';
 require_once $abs_us_root.$us_url_root.'lib/aws/aws-autoloader.php';
 require_once $abs_us_root.$us_url_root.'pages/helpers/pages_helper.php';
 require_once $abs_us_root.$us_url_root.'pages/helpers/mime_type.php';
+require_once $abs_us_root.$us_url_root.'lib/SimpleImage/src/abeautifulsite/SimpleImage.php';
 ?>
 
 <?php if (!securePage($_SERVER['PHP_SELF'])){die();}
@@ -56,11 +57,15 @@ if(!empty($_POST['uploads'])) {
         $b_show_disconect_message = false;
 
     } else {
-        $tmp_file_path = $abs_us_root.$us_url_root.'tmp/local_uploads';
-        $nid = add_waiting($client_id,$profile_id,$front_image_file,$back_image_file,$front_extension,$back_extension,$user,$tmp_file_path);
-        $b_show_disconect_message = !upload_local_storage($nid) ;
-        $n_waiting_to_be_uploaded = $db->query( "select * from ht_waiting p where p.is_uploaded = 0 and upload_result is null order by p.created_at;",[])->count();
-
+        try {
+            $tmp_file_path = $abs_us_root . $us_url_root . 'tmp/local_uploads';
+            $nid = add_waiting($client_id, $profile_id, $front_image_file, $back_image_file, $front_extension, $back_extension, $user, $tmp_file_path);
+            $b_show_disconect_message = !upload_local_storage($nid);
+            $n_waiting_to_be_uploaded = $db->query("SELECT * FROM ht_waiting p WHERE p.is_uploaded = 0 AND upload_result IS NULL ORDER BY p.created_at;", [])->count();
+        } catch (Exception $e) {
+            $validation->addError($e->getMessage());
+            $error_count++;
+        }
     }
 
 
