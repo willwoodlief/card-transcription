@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //   Redirect::to('account.php');
 // }
 
+require_once $abs_us_root.$us_url_root.'pages/helpers/pages_helper.php';
 //PHP Goes Here!
 delete_user_online(); //Deletes sessions older than 24 hours
 
@@ -85,7 +86,7 @@ if(!empty($_POST['settings'])){
 		$db->update('settings',1,$fields);
 	}
 	if($settings->site_name != $_POST['site_name']) {
-		$site_name = Input::get('site_name');
+		$site_name = to_utf8(Input::get('site_name'));
 		$fields=array('site_name'=>$site_name);
 		$db->update('settings',1,$fields);
 	}

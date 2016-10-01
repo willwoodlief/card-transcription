@@ -105,16 +105,16 @@ if(!empty($_POST['transcribe'])) {
     $fields = [];
 
     foreach($fields_to_check as $key=>$field) {
-        $val = Input::get($field);
-        echo "get {$key} => {$field} == {$val}<br>";
+        $val = to_utf8(Input::get($field));
+       // echo "get {$key} => {$field} == {$val}<br>";
         if (Input::get($field)) {
             $fields[$field] = Input::get($field);
         }
     }
 
 
-    print_nice($fields);
-    print_nice($_REQUEST);
+   // print_nice($fields);
+   // print_nice($_REQUEST);
     $fields['modified_at'] = time();
     $what = $db->update('ht_jobs', $jobid, $fields);
     if (!$what) {
