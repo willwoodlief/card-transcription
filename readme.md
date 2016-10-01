@@ -37,6 +37,8 @@ This improves the first version:
 9) add better magnification tool and process
 
 
+
+
   Original Install Notes
   -------------------------
   
