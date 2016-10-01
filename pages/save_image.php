@@ -88,6 +88,9 @@ if ($img->is_edited == 1) {
         ));
 
     } catch (S3Exception $e) {
+        publish_to_sns('could not delete older edited image from bucket: ','page died at save_image because
+     it could not delete  image from the bucket. Error message was '.  $e->getMessage());
+
         printErrorJSONAndDie('could not delete older edited  image from bucket: '. $e->getMessage());
     }
 
@@ -119,6 +122,9 @@ try {
         'StorageClass' => 'STANDARD'
     ));
 } catch (S3Exception $e) {
+    publish_to_sns('could not add  image to bucket: ','page died at save_image because
+     it could not add  image to the bucket. Error message was '.  $e->getMessage());
+
     printErrorJSONAndDie('could not add  image to bucket: '. $e->getMessage());
 }
 
@@ -127,6 +133,8 @@ try {
     $edit_url = @$s3Client->getObjectUrl($settings->s3_bucket_name, $key);
 } catch (S3Exception $e) {
     $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
+    publish_to_sns('could not get image url from bucket: ','page died at save_image because
+     it could get image url from bucket. Error message was '.  $e->getMessage());
     printErrorJSONAndDie('could not get  image url: '. $e->getMessage());
 }
 

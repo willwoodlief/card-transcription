@@ -24,6 +24,10 @@ $('.a-job-form').submit(function(e){
     $(window).on('beforeunload', function(){
         clear_alive();
     });
+
+    $(document).click(function() {
+        start_view_time = Date.now()/1000;
+    });
 });
 
 function doTimeView() {

@@ -23,6 +23,7 @@ require_once $abs_us_root.$us_url_root.'users/includes/navigation.php';
 require_once $abs_us_root.$us_url_root.'pages/helpers/pages_helper.php';
 
 
+
 if (!securePage($_SERVER['PHP_SELF'])){die();}
 if ($settings->site_offline==1){die("The site is currently offline.");}
 

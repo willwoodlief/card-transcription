@@ -87,7 +87,8 @@ try {
         'Key'    => $keyname
     ));
 } catch (S3Exception $e) {
-
+    publish_to_sns('could not get  image from bucket','page died at edit_job_image because
+     it could not get the image from the bucket. Error message was '.  $e->getMessage());
     die('could not get  image from bucket: '. $e->getMessage());
 }
 

@@ -132,6 +132,12 @@ if(!empty($_POST['settings'])){
 		$db->update('settings',1,$fields);
 	}
 
+	if($settings->sns_arn != $_POST['sns_arn']) {
+		$vts = Input::get('sns_arn');
+		$fields=array('sns_arn'=>$vts);
+		$db->update('settings',1,$fields);
+	}
+
     #
 
 
@@ -333,6 +339,13 @@ if(file_exists($abs_us_root.$us_url_root.'usersc/includes/admin_panels.php')){
             <label for="s3_bucket_name">S3 Bucket Name</label>
             <input type="text" class="form-control" name="s3_bucket_name" id="s3_bucket_name" value="<?=$settings->s3_bucket_name?>">
         </div>
+
+
+		<!-- sns_arn  -->
+		<div class="form-group">
+			<label for="sns_arn">SNS Topic Arn <span style="font-size: smaller"> This is used to send notifications about problems on the server</span> </label>
+			<input type="text" class="form-control" name="sns_arn" id="sns_arn" value="<?=$settings->sns_arn?>">
+		</div>
 
 
 

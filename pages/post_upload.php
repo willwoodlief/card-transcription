@@ -95,6 +95,8 @@ try {
     ));
 } catch (S3Exception $e) {
     $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
+    publish_to_sns('could not move front image in bucket: ','page died at post_upload because
+     it could not move the image from the bucket. Error message was '.  $e->getMessage());
     printErrorJSONAndDie('could not move front image in bucket: '. $e->getMessage());
 }
 
@@ -102,6 +104,8 @@ try {
     $front_url = @$s3Client->getObjectUrl($our_bucket, $new_front_key_name);
 } catch (S3Exception $e) {
     $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
+    publish_to_sns('could not get front image url from bucket: ','page died at post_upload because
+     it could not get information from the  image from the bucket. Error message was '.  $e->getMessage());
     printErrorJSONAndDie('could not get front image url: '. $e->getMessage());
 }
 
@@ -113,6 +117,8 @@ try {
     ));
 } catch (S3Exception $e) {
     $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
+    publish_to_sns('could not move back image in bucket: ','page died at post_upload because
+     it could not move the image from the bucket. Error message was '.  $e->getMessage());
     printErrorJSONAndDie('could not move back image in bucket: '. $e->getMessage());
 }
 
@@ -120,6 +126,9 @@ try {
     $back_url = @$s3Client->getObjectUrl($our_bucket, $new_back_key_name);
 } catch (S3Exception $e) {
     $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
+    publish_to_sns('could not get back image url from bucket: ','page died at post_upload because
+     it could not get information from the  image from the bucket. Error message was '.  $e->getMessage());
+
     printErrorJSONAndDie('could not get back image url: '. $e->getMessage());
 }
 

@@ -1,5 +1,45 @@
 <?php
 //will upload all unless is set
+
+require_once '../lib/ForceUTF8/Encoding.php';
+require_once '../lib/aws/aws-autoloader.php';
+
+
+function publish_to_sns($title,$message) {
+    global  $settings;
+    if (!$settings->sns_arn || empty($settings->sns_arn) ) {
+        return;
+    }
+
+    $sharedConfig = [
+        'region'  => getenv('AWS_REGION'),
+        'version' => 'latest'
+    ];
+
+    // Create an SDK class used to share configuration across clients.
+    $sdk = new Aws\Sdk($sharedConfig);
+
+    $client = $sdk->createSns();
+    $payload = array(
+        'TopicArn' => $settings->sns_arn,
+        'Message' => to_utf8($message),
+        'Subject' => to_utf8($title),
+        'MessageStructure' => 'string',
+    );
+
+    try {
+        $client->publish( $payload );
+    } catch ( Exception $e ) {
+        $email = Config::get('contact/email');
+        email($email,"could not publish: $title" ,$message);
+    }
+
+}
+
+function to_utf8($what) {
+    return ForceUTF8\Encoding::toUTF8($what);
+}
+
 function upload_local_storage($idOnly=null) {
 
 
@@ -109,6 +149,8 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
          // Print the URL to the object.
          $status_to_post .= ', '.$result['ObjectURL'] ;
      } catch (S3Exception $e) {
+         publish_to_sns('could not add image to  bucket: ','page died at upload_from_waiting_row because
+     it could not put image to bucket. Error message was '.  $e->getMessage());
          $status_to_post .= ', '.$e->getMessage();
          return  $status_to_post; //writes status to row in finally block
      }
@@ -132,6 +174,8 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
          // Print the URL to the object.
          $status_to_post .= ', '.$result['ObjectURL'] ;
      } catch (S3Exception $e) {
+         publish_to_sns('could not add image to  bucket: ','page died at upload_from_waiting_row because
+     it could not put image to bucket. Error message was '.  $e->getMessage());
          $status_to_post .= ', '.$e->getMessage();
          return  $status_to_post; //writes status to row in finally block
      }

@@ -23,3 +23,5 @@ putenv("DB_HOST= database url here (localhost for local install)");
 putenv("CAPTCHA_KEY= goto google and get captcha key for your domain");
 putenv("CAPTCHA_SECRET= the captch secret goes here");
 
+//contact info
+putenv("EMERGANCY_EMAIL",'some_email@gmail.com');
