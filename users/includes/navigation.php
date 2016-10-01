@@ -51,7 +51,7 @@ $email_act=$results->email_act;
 
 ?>
 <!-- Navigation -->
-<div class="navbar navbar-fixed-top navbar-inverse" role="navigation">
+<div class="main-header navbar navbar-fixed-top navbar-inverse" role="navigation">
 	<div class="container">
 		<!-- Brand and toggle get grouped for better mobile display -->
 		<div class="navbar-header ">

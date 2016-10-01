@@ -46,15 +46,23 @@ $error_count = 0;
 
 // get which this user is, he is either a transcriber or some kind of checker (admin or checker)
 $b_is_checker = false;
+$redirect_timeout_url = 'transcribe.php';
 
+if ($user && $user->roles()  && in_array("Administrator", $user->roles())) {
+    $b_is_checker = true;
+    $redirect_timeout_url = 'check.php';
+}
+elseif ($user && $user->roles()  && in_array("Checker", $user->roles())) {
+    $b_is_checker = true;
+    $redirect_timeout_url = 'check.php';
 
-if ($user && $user->roles()  && in_array("Administrator", $user->roles())) {$b_is_checker = true;}
-elseif ($user && $user->roles()  && in_array("Checker", $user->roles())) {$b_is_checker = true;}
+}
 
 
 if(!empty($_POST['approve'])) {
-    if (!$job->translater->id) { die("Cannot approve something that was not done first");}
 
+    if (!$job->translater->id) { die("Cannot approve something that was not done first");}
+    clearJobViewStamp($jobid);
     if ($user && $user->roles()  && in_array("Administrator", $user->roles())) {
         $what = $db->update('ht_jobs', $jobid, ['checker_user_id'=>$user->data()->id,'checked_at'=> time()]);
         if (!$what) {
@@ -83,7 +91,7 @@ if(!empty($_POST['approve'])) {
 //print_nice($job);
 if(!empty($_POST['transcribe'])) {
 
-
+    clearJobViewStamp($jobid);
     $token = $_POST['csrf'];
     if (!Token::check($token)) {
          die('Token doesn\'t match!');
@@ -160,6 +168,14 @@ if(!empty($_POST['transcribe'])) {
     }
 }
 
+//add a timestamp to the page so that we can filter it out of the ready to do lists
+$can_edit_this_job = canEditJob($user,$jobid);
+if ($can_edit_this_job) {
+    addJobViewStamp($user,$jobid);
+} else {
+    #redirect
+    Redirect::to($redirect_timeout_url);
+}
 
 ?>
 
@@ -178,7 +194,7 @@ if(!empty($_POST['transcribe'])) {
                 <div class="col-xs-6 col-sm-3 col-md-3 col-lg-3" style="/*height:600px;overflow-y: scroll;*/">
 
                     <?php if ($b_is_checker && $job->translater->id) { ?>
-                        <form class="" action="job.php" name="job" method="post">
+                        <form class="a-job-form" action="job.php" name="job" id="approve-form" method="post">
                             <h3>Approve This Transcription</h3>
                             <input type="hidden" name="csrf" value="<?=Token::generate();?>" />
                             <input type="hidden" name="jobid" value="<?=$job->job->id ?>" />
@@ -189,13 +205,13 @@ if(!empty($_POST['transcribe'])) {
 
                     <?php } ?>
 
-                    <form class="" action="job.php" name="job" method="post">
+                    <form class="a-job-form" action="job.php" name="job" id="job-form" method="post">
                         <h3>Edit Transcription</h3>
                         <input type="hidden" name="jobid" value="<?=$job->job->id ?>" >
 
                         <div class="form-group">
                             <label for="fname">First Name</label>
-                            <input type="text" class="form-control" name="fname" id="fname" value="<?=$job->transcribe->fname ?>">
+                            <input type="text" class="a-job-form form-control" name="fname" id="fname" value="<?=$job->transcribe->fname ?>">
                         </div>
 
                         <div class="form-group">
@@ -414,7 +430,18 @@ if(!empty($_POST['transcribe'])) {
 <?php require_once $abs_us_root.$us_url_root.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
 
 <!-- Place any per-page javascript here -->
+<script>
+    var jobid = <?= $jobid;?>;
+    var start_view_time = Math.floor(Date.now()/1000);
+    var timeout_in_seconds= <?= $settings->view_timeout_seconds ;?>;
+    var redirect_timeout_url = '<?= $redirect_timeout_url ;?>';
+</script>
+
 <script src="js/auto_zip.js"></script>
+<script src="js/jquery.phoenix.js"></script>
+<script src="js/jobform.js"></script>
+<script src="../users/js/jquery.noty.packaged.min.js"></script>
+
 <script>
     function reload_a() {
         if (confirm("This will replace the edited image with the original image, but changes will not take affect until you save it again.") == true) {

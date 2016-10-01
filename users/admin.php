@@ -126,6 +126,14 @@ if(!empty($_POST['settings'])){
         $db->update('settings',1,$fields);
     }
 
+	if($settings->view_timeout_seconds != $_POST['view_timeout_seconds']) {
+		$vts = intval(Input::get('view_timeout_seconds'));
+		$fields=array('view_timeout_seconds'=>$vts);
+		$db->update('settings',1,$fields);
+	}
+
+    #
+
 
 	Redirect::to('admin.php');
 }
@@ -314,6 +322,11 @@ if(file_exists($abs_us_root.$us_url_root.'usersc/includes/admin_panels.php')){
             <input type="text" class="form-control" name="website_url" id="website_url" value="<?=$settings->website_url?>">
         </div>
 
+		<!-- view_timeout_seconds  -->
+		<div class="form-group">
+			<label for="view_timeout_seconds">Job Form Timeout in Seconds</label>
+			<input type="text" class="form-control" name="view_timeout_seconds" id="view_timeout_seconds" value="<?=$settings->view_timeout_seconds?>">
+		</div>
 
         <!-- s3_bucket_name  -->
         <div class="form-group">

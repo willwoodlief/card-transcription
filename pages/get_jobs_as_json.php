@@ -59,7 +59,7 @@ if ($checker_id) {
     $checker_id = intval($checker_id);
 }
 
-$info = get_jobs($jobid,$b_is_transcribed,$b_is_checked,$transcriber_id,$checker_id);
+$info = get_jobs($jobid,$b_is_transcribed,$b_is_checked,$transcriber_id,$checker_id,true);
 printOkJSONAndDie(['jobs'=>$info]);
 
 

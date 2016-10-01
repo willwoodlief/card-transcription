@@ -356,43 +356,62 @@ function rest_helper($url, $params = null, $verb = 'GET', $format = 'json')
 }
 
 
-function printOkJSONAndDie($phpArray) {
+function printOkJSONAndDie($phpArray=[]) {
+    if (!is_array($phpArray)) {
+        $r=[];
+        $r['message'] = $phpArray;
+        $phpArray = $r;
+    }
     header('Content-Type: application/json');
     $phpArray['status'] = 'ok';
-    print json_encode($phpArray);
+    $phpArray['valid'] = true;
+    $out = json_encode($phpArray);
+    if ($out) {
+        print $out;
+    } else {
+        printErrorJSONAndDie( json_last_error_msg());
+    }
     exit;
 }
 
 function printErrorJSONAndDie($message,$phpArray=[]) {
     header('Content-Type: application/json');
     $phpArray['status'] = 'error';
+    $phpArray['valid'] = false;
     $phpArray['message'] = $message;
-    print json_encode($phpArray);
+    $out = json_encode($phpArray);
+    if ($out) {
+        print $out;
+    } else {
+        print json_last_error_msg();
+    }
+
     exit;
 }
 
 
 
 //for debugging
+//for debugging
 function print_nice($elem,$max_level=15,$print_nice_stack=array()){
     //if (is_object($elem)) {$elem = object_to_array($elem);}
     if(is_array($elem) || is_object($elem)){
         if(in_array($elem,$print_nice_stack,true)){
-            echo "<font color=red>RECURSION</font>";
+            echo "<span style='color:red'>RECURSION</span>";
             return;
         }
         $print_nice_stack[]=&$elem;
         if($max_level<1){
-            echo "<font color=red>reached maximum level</font>";
+            echo "<span style='color:red'>reached maximum level</span>";
             return;
         }
         $max_level--;
         echo "<table border=1 cellspacing=0 cellpadding=3 width=100%>";
         if(is_array($elem)){
-            echo '<tr><td colspan=2 style="background-color:#333333;"><strong><font color=white>ARRAY</font></strong></td></tr>';
+            echo '<tr><td colspan=2 style="background-color:#333333;"><strong><span style="color:white">ARRAY</span></strong></td></tr>';
         }else{
             echo '<tr><td colspan=2 style="background-color:#333333;"><strong>';
-            echo '<font color=white>OBJECT Type: '.get_class($elem).'</font></strong></td></tr>';
+            echo '<span style="color:white">OBJECT Type: '.get_class($elem).'</span></strong></td></tr>';
         }
         $color=0;
         foreach($elem as $k => $v){
@@ -410,25 +429,23 @@ function print_nice($elem,$max_level=15,$print_nice_stack=array()){
         return;
     }
     if($elem === null){
-        echo "<font color=green>NULL</font>";
+        echo "<span style='color:green'>NULL</span>";
     }elseif($elem === 0){
         echo "0";
     }elseif($elem === true){
-        echo "<font color=green>TRUE</font>";
+        echo "<span style='color:green'>TRUE</span>";
     }elseif($elem === false){
-        echo "<font color=green>FALSE</font>";
+        echo "<span style='color:green'>FALSE</span>";
     }elseif($elem === ""){
-        echo "<font color=green>EMPTY STRING</font>";
+        echo "<span style='color:green'>EMPTY STRING</span>";
     }else{
-        echo str_replace("\n","<strong><font color=red>*</font></strong><br>\n",$elem);
+        echo str_replace("\n","<strong><span style='color:green'>*</span></strong><br>\n",$elem);
     }
 }
-
 
 function TO($object){ //Test Object
     if(!is_object($object)){
         throw new Exception("This is not a Object");
-        return;
     }
     if(class_exists(get_class($object), true)) echo "<pre>CLASS NAME = ".get_class($object);
     $reflection = new ReflectionClass(get_class($object));
@@ -479,7 +496,9 @@ function get_http_response_code($theURL) {
     return substr($headers[0], 9, 3);
 }
 
-function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,$transcribed_id = null,$checked_id=null){
+function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
+                  $transcribed_id = null,$checked_id=null,$b_only_free=false){
+    global $settings;
     $db = DB::getInstance();
 
     if ($b_is_transcribed) {
@@ -492,6 +511,13 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,$transcribe
         $checked_op = 'IS NOT';
     } else {
         $checked_op = 'IS';
+    }
+
+    if ($b_only_free) {
+        $time_limit = $settings->view_timeout_seconds;
+        $free_check = " AND ( ($time_limit <=  UNIX_TIMESTAMP() - j.viewing_user_at) ||  j.viewing_user_at is NULL) ";
+    } else {
+        $free_check = '';
     }
 
 
@@ -513,7 +539,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,$transcribe
         $where_users = "AND {$where_users}";
     }
 
-    $where_stuff = "j.transcriber_user_id {$transcribed_op} null AND j.checker_user_id {$checked_op} null {$where_users}";
+    $where_stuff = "j.transcriber_user_id {$transcribed_op} null AND j.checker_user_id {$checked_op} null {$where_users} $free_check";
 
     if ($jobid) {
         $jobid = intval($jobid);
@@ -636,4 +662,25 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,$transcribe
 
 }
 
-?>
+function addJobViewStamp($user,$jobid) {
+    $db = DB::getInstance();
+    return $db->update('ht_jobs', $jobid, ['viewing_user_id' => $user->data()->id, 'viewing_user_at' => time()]);
+}
+
+function clearJobViewStamp($jobid) {
+    $db = DB::getInstance();
+    return $db->update('ht_jobs', $jobid, ['viewing_user_id' => null, 'viewing_user_at' =>null]);
+}
+
+function canEditJob($user,$jobid) {
+    global  $settings;
+    $time_limit = $settings->view_timeout_seconds;
+    $userid = $user->data()->id;
+    $db = DB::getInstance();
+    $jobQ = $db->query("Select id FROM ht_jobs where (viewing_user_id = $userid || viewing_user_id is NULL) AND ( ($time_limit <=  UNIX_TIMESTAMP() - viewing_user_at) ||  viewing_user_at is NULL) AND (id = ? );",[$jobid]);
+    if ( ( !$db->count() ) || ($db->count() <= 0)) {
+        return false;
+    } else {
+        return true;
+    }
+}

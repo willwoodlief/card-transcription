@@ -19,7 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 class DB {
 	private static $_instance = null;
-	private $_pdo, $_query, $_error = false, $_results, $_resultsArray, $_count = 0, $_lastId, $_queryCount=0,$_errorInfo;
+	private $_pdo, $_query, $_error = false, $_results, $_resultsArray,
+            $_count = 0, $_lastId, $_queryCount=0,$_errorInfo,
+            $_sql = '';
 
 	private function __construct(){
 		try{
@@ -45,6 +47,7 @@ class DB {
 		$this->_queryCount++;
 		$this->_error = false;
         $this->_errorInfo = [];
+        $this->_sql = $sql;
 		if ($this->_query = $this->_pdo->prepare($sql)) {
 			$x = 1;
 			if (count($params)) {
@@ -75,9 +78,15 @@ class DB {
 		return $this->action('SELECT *',$table,array('id','=',$id));
 	}
 
-	public function action($action, $table, $where = array()){
+	public function action($action, $table, $where = array(),$orderby=false){
 		$sql = "{$action} FROM {$table}";
 		$value = '';
+        if ($orderby) {
+            $order_string = $orderby;
+        } else {
+            $order_string = '';
+        }
+
 		if (count($where) === 3) {
 			$operators = array('=', '>', '<', '>=', '<=');
 
@@ -85,18 +94,21 @@ class DB {
 			$operator = $where[1];
 			$value = $where[2];
 
+
 			if(in_array($operator, $operators)){
-				$sql .= " WHERE {$field} {$operator} ?";
+				$sql .= " WHERE {$field} {$operator} ? ";
 			}
 		}
+
+		$sql .= ' '. $order_string;
 		if (!$this->query($sql, array($value))->error()) {
 			return $this;
 		}
 		return false;
 	}
 
-	public function get($table, $where){
-		return $this->action('SELECT *', $table, $where);
+	public function get($table, $where,$order = false){
+		return $this->action('SELECT *', $table, $where,$order);
 	}
 
 	public function delete($table, $where){
@@ -176,6 +188,10 @@ class DB {
 	
 	public function getQueryCount(){
 		return $this->_queryCount;
-	}	
+	}
+
+	public function getLastSQL() {
+        return $this->_sql;
+    }
 	
 }
