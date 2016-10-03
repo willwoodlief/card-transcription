@@ -1,6 +1,7 @@
 <?php
 //die(var_dump($_REQUEST));
 require_once '../users/init.php';
+
 require_once $abs_us_root.$us_url_root.'users/includes/header_not_closed.php';
 ?>
 
@@ -17,6 +18,7 @@ require_once $abs_us_root.$us_url_root.'users/includes/header_not_closed.php';
 </style>
 
 </head>
+
 <body>
 <?php
 require_once $abs_us_root.$us_url_root.'users/includes/navigation.php';
@@ -176,7 +178,16 @@ if ($can_edit_this_job) {
 } else {
     #redirect
     Redirect::to($redirect_timeout_url);
+
 }
+
+
+//get height for both images:
+$heightForFrame = $job->images->edit_side_b->height;
+if ($heightForFrame < $job->images->edit_side_a->height ) {
+    $heightForFrame = $job->images->edit_side_a->height;
+}
+
 
 ?>
 
@@ -188,149 +199,156 @@ if ($can_edit_this_job) {
     </div>
 	<div class="container-fluid">
 		<!-- Page Heading -->
-
+        <?php if ($b_is_checker && $job->translater->id) { ?>
 				<!-- Content goes here -->
         <div class="row">
+            <div class="panel panel-default" class="col-sm-3">
+                <div class="panel-body centerBlock">
 
-                <div class="col-xs-6 col-sm-3 col-md-3 col-lg-3" style="/*height:600px;overflow-y: scroll;*/">
 
-                    <?php if ($b_is_checker && $job->translater->id) { ?>
                         <form class="a-job-form" action="job.php" name="job" id="approve-form" method="post">
-                            <h3>Approve This Transcription</h3>
+                            <div class="col-sm-3">
+                                <h3>Approve This Transcription</h3>
+                            </div>
+                            <div class="col-sm-3">
+                                <input class='btn btn-primary' type='submit' name="approve" value='Approve Without Changing' />
+                            </div>
+
                             <input type="hidden" name="csrf" value="<?=Token::generate();?>" />
                             <input type="hidden" name="jobid" value="<?=$job->job->id ?>" />
-
-                            <p><input class='btn btn-primary' type='submit' name="approve" value='Approve Without Changing' /></p>
                         </form>
-                        <hr>
-
-                    <?php } ?>
-
-                    <form class="a-job-form" action="job.php" name="job" id="job-form" method="post">
-                        <h3>Edit Transcription</h3>
-                        <input type="hidden" name="jobid" value="<?=$job->job->id ?>" >
-
-                        <div class="form-group">
-                            <label for="fname">First Name</label>
-                            <input type="text" class="a-job-form form-control" name="fname" id="fname" value="<?=$job->transcribe->fname ?>">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="mname">Middle Initial</label>
-                            <input type="text" class="form-control" name="mname" id="mname" value="<?=$job->transcribe->mname ?>">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="lname">Last Name</label>
-                            <input type="text" class="form-control" name="lname" id="lname" value="<?=$job->transcribe->lname ?>">
-                        </div>
 
 
+                </div>
+            </div>
+        </div>
+        <?php } ?>
+        <div class="row" style="">
 
-                        <div class="form-group">
-                            <label for="suffix">Suffix</label>
-                            <input type="text" class="form-control" name="suffix" id="suffix" value="<?=$job->transcribe->suffix ?>">
-                        </div>
+                    <form class="a-job-form" action="job.php" name="job" id="job-form" method="post" class="">
+                        <div class="col-xs-12" style="">
 
-                        <div class="form-group">
-                            <label for="designations">Designations</label>
-                            <input type="text" class="form-control" name="designations" id="designations" value="<?=$job->transcribe->designations ?>">
-                        </div>
+                            <input type="hidden" name="jobid" value="<?=$job->job->id ?>" >
 
-                        <div class="form-group">
-                            <label for="address">Address</label>
-                            <input type="text" class="form-control" name="address" id="address" value="<?=$job->transcribe->address ?>">
-                        </div>
+                            <div class="form-group col-xs-2" style="">
 
-                        <div class="form-group">
-                            <label for="zip">Zip <span style="font-size: smaller">(auto fills in city and state)<span> </label>
-                            <input type="text" class="form-control" name="zip" id="zip" value="<?=$job->transcribe->zip ?>">
-                        </div>
+                                <label for="fname" class=" control-label">First Name</label>
+                                <input type="text" class=".input-md a-job-form form-control" name="fname" id="fname" value="<?=$job->transcribe->fname ?>">
+                            </div>
 
-                        <div class="form-group">
-                            <label for="city">City</label>
-                            <input type="text" class="form-control" name="city" id="city" value="<?=$job->transcribe->city ?>">
-                        </div>
+                            <div class="form-group  col-xs-1">
+                                <label for="mname">Middle</label>
+                                <input type="text" class="form-control" name="mname" id="mname" value="<?=$job->transcribe->mname ?>">
+                            </div>
 
-                        <div class="form-group">
-                            <label for="state">State</label>
-                            <input type="text" class="form-control" name="state" id="state" value="<?=$job->transcribe->state ?>">
+                            <div class="form-group  col-xs-3">
+                                <label for="lname">Last Name</label>
+                                <input type="text" class="form-control" name="lname" id="lname" value="<?=$job->transcribe->lname ?>">
+                            </div>
+
+
+
+                            <div class="form-group  col-xs-1">
+                                <label for="suffix">Suffix</label>
+                                <input type="text" class="form-control" name="suffix" id="suffix" value="<?=$job->transcribe->suffix ?>">
+                            </div>
+
+                            <div class="form-group col-xs-2">
+                                <label for="other_category">Title</label>
+                                <input type="text" class="form-control" name="other_category" id="other_category" value="<?=$job->transcribe->other_category ?>">
+                            </div>
+
+                            <div class="form-group col-xs-2">
+                                <label for="designations">Designations</label>
+                                <input type="text" class="form-control" name="designations" id="designations" value="<?=$job->transcribe->designations ?>">
+                            </div>
+
+                            <!-- this field can be used later for additional stuff with title, originated when spec was a little different and no need to take it out -->
+
                         </div>
 
 
+                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="">
 
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="text" class="form-control" name="email" id="email" value="<?=$job->transcribe->email ?>">
-                        </div>
+                            <div class="form-group  col-xs-3">
+                                <label for="address">Address</label>
+                                <input type="text" class="form-control" name="address" id="address" value="<?=$job->transcribe->address ?>">
+                            </div>
 
-                        <div class="form-group">
-                            <label for="website">Website</label>
-                            <input type="text" class="form-control" name="website" id="website" value="<?=$job->transcribe->website ?>">
-                        </div>
+                            <div class="form-group  col-xs-1">
+                                <label for="zip" style="white-space: nowrap ">Zip <span style="font-size: smaller;white-space: nowrap ">(auto fill)<span> </label>
+                                <input type="text" class="form-control" name="zip" id="zip" value="<?=$job->transcribe->zip ?>">
+                                <span class="help-block"></span>
+                            </div>
 
-                        <div class="form-group">
-                            <label for="phone">Phone</label>
-                            <input type="text" class="form-control" name="phone" id="phone" value="<?=$job->transcribe->phone ?>">
-                        </div>
+                            <div class="form-group col-xs-2">
+                                <label for="city">City</label>
+                                <input type="text" class="form-control" name="city" id="city" value="<?=$job->transcribe->city ?>">
+                            </div>
 
-                        <div class="form-group">
-                            <label for="cell_phone">Cell Phone</label>
-                            <input type="text" class="form-control" name="cell_phone" id="cell_phone" value="<?=$job->transcribe->cell_phone ?>">
-                        </div>
+                            <div class="form-group col-xs-2">
+                                <label for="state">State</label>
+                                <input type="text" class="form-control" name="state" id="state" value="<?=$job->transcribe->state ?>">
+                            </div>
 
-                        <div class="form-group">
-                            <label for="fax">Fax</label>
-                            <input type="text" class="form-control" name="fax" id="fax" value="<?=$job->transcribe->fax ?>">
-                        </div>
+                            <div class="form-group col-xs-2">
+                                <label for="phone">Phone</label>
+                                <input type="text" class="form-control" name="phone" id="phone" value="<?=$job->transcribe->phone ?>">
+                            </div>
 
-                        <div class="form-group">
-                            <label for="skype">Skype</label>
-                            <input type="text" class="form-control" name="skype" id="skype" value="<?=$job->transcribe->skype ?>">
-                        </div>
+                            <div class="form-group col-xs-2">
+                                <label for="cell_phone">Cell Phone</label>
+                                <input type="text" class="form-control" name="cell_phone" id="cell_phone" value="<?=$job->transcribe->cell_phone ?>">
+                            </div>
 
-                        <div class="form-group">
-                            <label for="other_category">Other Category</label>
-                            <input type="text" class="form-control" name="other_category" id="other_category" value="<?=$job->transcribe->other_category ?>">
-                        </div>
+                        </div> <!-- Third row -->
 
-                        <div class="form-group">
-                            <label for="other_value">Other Value</label>
-                            <input type="text" class="form-control" name="other_value" id="other_value" value="<?=$job->transcribe->other_value ?>">
-                        </div>
+                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="">
+
+
+                            <div class="form-group col-xs-2">
+                                <label for="fax">Fax</label>
+                                <input type="text" class="form-control" name="fax" id="fax" value="<?=$job->transcribe->fax ?>">
+                            </div>
+
+                            <div class="form-group col-sm-2">
+                                <label for="email">Email</label>
+                                <input type="text" class="form-control" name="email" id="email" value="<?=$job->transcribe->email ?>">
+                            </div>
+
+                            <div class="form-group col-sm-3">
+                                <label for="website">Website</label>
+                                <input type="text" class="form-control" name="website" id="website" value="<?=$job->transcribe->website ?>">
+                            </div>
+
+
+                            <div class="form-group col-sm-2">
+                                <label for="skype">Skype</label>
+                                <input type="text" class="form-control" name="skype" id="skype" value="<?=$job->transcribe->skype ?>">
+                            </div>
+
+                            <div class="form-group col-sm-2">
+                                <label for="skype"></label>
+                                <input class='btn btn-primary' type='submit' name="transcribe" value='Save Transcription' />
+                            </div>
+
+
+                        </div> <!-- Fourth row -->
+
 
                         <input type="hidden" name="csrf" value="<?=Token::generate();?>" />
 
-                        <p><input class='btn btn-primary' type='submit' name="transcribe" value='Save Transcription' /></p>
+
                     </form>
 
 
                 </div>
-                <div class="col-sm-9  col-md-9  col-lg-9 "  style="background-color: floralwhite;">
+
+        <div class="row">
+            <div class="col-sm-6  "  style="background-color: floralwhite;">
                     <div class="panel-group">
                         <div class="panel panel-default img-outer-holder">
-                            <div class="panel-heading">
-                                <div class="row">
-                                    <div class="col-xs-6 col-md-6">
-                                        Side A (edited version or orginal if never edited) <br>
-                                        When the image is expanded any click on it will make it normal sized again
-                                    </div>
 
-                                    <div class="col-xs-6 col-md-6">
-
-                                        <div class="btn-group btn-group-justified">
-                                            <div class="btn-group">
-                                                <button id = "revert-edit-a" type="button" class="btn btn-warning" onclick="reload_a();">Revert to Original</button>
-                                            </div>
-                                            <div class="btn-group">
-                                                <button id = "expand-edit-a" type="button" onclick="expand_a();" class="btn btn-default ">Expand</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                 </div>
-
-
-                            </div>
                             <div class="panel-body">
                                 <?php
                                     if ($job->images->edit_side_a->id) {
@@ -342,38 +360,47 @@ if ($can_edit_this_job) {
                                         $height = $job->images->org_side_a->height;
                                     }
 
-                                    $max = $width;
-                                    if ($height > $max) {$max = $height;}
-                                    if ($max < 400) { $max = 400;}
+
                                 ?>
-                                <iframe src="edit_job_image.php?jobid=<?= $job->job->id; ?>&side=0&force_original=0" name="side-a-edit" id="side-a-edit" height="<?= $max + 50 ?>px" width="<?= $max + 70 ?>px" style=";border:0 none;"></iframe>
+                                <iframe src="edit_job_image.php?jobid=<?= $job->job->id; ?>&side=0&force_original=0" name="side-a-edit" id="side-a-edit" height="<?= $heightForFrame + 250?>px" width="<?= $width + 30 ?>px" style=";border:0 none;"></iframe>
                             </div>
-                        </div>
-
-
-                        <div class="panel panel-default img-outer-holder">
-                            <div class="panel-heading">
+                            <div class="panel-footer">
                                 <div class="row">
-                                    <div class="col-xs-6 col-md-6">
-                                        Side B (edited version or orginal if never edited)<br>
-                                        When the image is expanded any click on it will make it normal sized again
+                                    <div class="col-sm-6 col-md-6">
+                                        Side A <span style="font-size: smaller;padding-left: 10px"> (edited version or orginal if never edited)</span>
                                     </div>
 
-                                    <div class="col-xs-6 col-md-6">
+                                    <div class="col-sm-6 col-md-6">
+
                                         <div class="btn-group btn-group-justified">
                                             <div class="btn-group">
-                                                <button id = "revert-edit-b" type="button" onclick="reload_b();" class="btn btn-warning">Revert to Original</button>
+                                                <button id = "revert-edit-a" type="button" class="btn btn-warning" onclick="reload_a();"
+                                                        data-toggle="tooltip" title="This will erase all edited changes and recreate the image again for editing">
+                                                    Revert to Original
+                                                </button>
                                             </div>
                                             <div class="btn-group">
-                                                <button id = "expand-edit-b" type="button" onclick="expand_b();" class="btn btn-default ">Expand</button>
+                                                <button id = "expand-edit-a" type="button"
+                                                        onclick="expand_a();" class="btn btn-default "
+                                                        data-toggle="tooltip" title="When the image is expanded any click on it will make it normal sized again">
+                                                    Expand
+                                                </button>
                                             </div>
                                         </div>
-
-
                                     </div>
                                 </div>
 
+
                             </div>
+                        </div>
+
+                    </div> <!-- end of panel group edited A -->
+                </div> <!-- END of 1/2 row -->
+
+            <div class="col-sm-6  "  style="background-color: floralwhite;">
+                <div class="panel-group">
+                    <div class="panel panel-default img-outer-holder">
+
                             <div class="panel-body">
                                 <?php
                                 if ($job->images->edit_side_b->id) {
@@ -385,17 +412,47 @@ if ($can_edit_this_job) {
                                     $height = $job->images->org_side_b->height;
                                 }
 
-                                $max = $width;
-                                if ($height > $max) {$max = $height;}
-                                if ($max < 400) { $max = 400;}
                                 ?>
-                                <iframe src="edit_job_image.php?jobid=<?= $job->job->id; ?>&side=1&force_original=0" name="side-b-edit" id="side-b-edit" height="<?= $max + 50 ?>px" width="<?= $max + 70 ?>px" style="border:0 none;"></iframe>
+                                <iframe src="edit_job_image.php?jobid=<?= $job->job->id; ?>&side=1&force_original=0" name="side-b-edit" id="side-b-edit" height="<?= $heightForFrame + 250 ?>px" width="<?= $width + 30 ?>px" style="border:0 none;"></iframe>
                             </div>
+                            <div class="panel-footer">
+                            <div class="row">
+                                <div class="col-sm-6 col-md-6">
+                                    Side B <span style="font-size: smaller;padding-left: 10px"> (edited version or orginal if never edited)</span>
+                                </div>
+
+                                <div class="col-sm-6 col-md-6">
+                                    <div class="btn-group btn-group-justified">
+                                        <div class="btn-group">
+                                            <button id = "revert-edit-b" type="button" onclick="reload_b();"
+                                                    class="btn btn-warning"
+                                                    data-toggle="tooltip" title="This will erase all edited changes and recreate the image again for editing">
+                                                Revert to Original
+                                            </button>
+                                        </div>
+                                        <div class="btn-group">
+                                            <button id = "expand-edit-b" type="button" onclick="expand_b();"
+                                                    class="btn btn-default "
+                                                    data-toggle="tooltip"
+                                                    title="When the image is expanded any click on it will make it normal sized again">
+                                                Expand
+                                            </button>
+                                        </div>
+                                    </div>
+
+
+                                </div>
                             </div>
+
                         </div>
+                            </div>
 
+            </div> <!-- end of panel group edited A -->
+            </div> <!-- END of 1/2 row -->
+        </div> <!-- end of row -->
 
-                        <div class="panel panel-default img-outer-holder">
+        <div class="row">
+        <div class="panel panel-default img-outer-holder">
                             <div class="panel-heading">Side A (Original Version)</div>
                             <div class="panel-body">
                                 <img src="<?=$job->images->org_side_a->url?>"
@@ -405,7 +462,10 @@ if ($can_edit_this_job) {
                                 />
                             </div>
                         </div>
-                        <div class="panel panel-default img-outer-holder">
+    </div>
+
+        <div class="row">
+        <div class="panel panel-default img-outer-holder">
                             <div class="panel-heading">Side B (Original Version)</div>
                             <div class="panel-body">
                                 <img src="<?=$job->images->org_side_b->url?>"
@@ -415,11 +475,11 @@ if ($can_edit_this_job) {
                                 />
                             </div>
                         </div>
-                    </div>
+    </div>
 
-                </div>
 
-        </div>
+    </div>
+
 
 
 

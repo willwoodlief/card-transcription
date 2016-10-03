@@ -458,7 +458,7 @@ function restart_edit($jobid,$side) {
     $edit_url = null;
 //get the image url, since we want to be flexable in key schemes, always get the new image url
     try {
-        $edit_url = @$s3Client->getObjectUrl($bucket_to, $key_to);
+        $edit_url = @$s3Client->getObjectUrl($bucket_to, $new_key_name);
     } catch (S3Exception $e) {
         $db->update('ht_jobs', $jobid, ['error_message' => $e->getMessage()]);
         publish_to_sns('could not get image url from bucket: ','page died at save_image because
@@ -844,7 +844,7 @@ function get_http_response_code($theURL) {
 
 function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
                   $transcribed_id = null,$checked_id=null,$b_only_free=false){
-    global $settings;
+    global $settings,$user;
     $db = DB::getInstance();
 
     if ($b_is_transcribed) {
@@ -861,7 +861,9 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
 
     if ($b_only_free) {
         $time_limit = $settings->view_timeout_seconds;
-        $free_check = " AND ( ($time_limit <=  UNIX_TIMESTAMP() - j.viewing_user_at) ||  j.viewing_user_at is NULL) ";
+        $userid = $user->data()->id;
+
+        $free_check = " AND ( ($time_limit <=  UNIX_TIMESTAMP() - j.viewing_user_at) ||  (j.viewing_user_at is NULL) || (viewing_user_id = $userid) ) ";
     } else {
         $free_check = '';
     }
@@ -885,7 +887,8 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
         $where_users = "AND {$where_users}";
     }
 
-    $where_stuff = "j.transcriber_user_id {$transcribed_op} null AND j.checker_user_id {$checked_op} null {$where_users} $free_check";
+    $where_stuff = "j.transcriber_user_id {$transcribed_op} null AND
+                        j.checker_user_id {$checked_op} null {$where_users} $free_check";
 
     if ($jobid) {
         $jobid = intval($jobid);
@@ -1019,8 +1022,12 @@ function clearJobViewStamp($jobid) {
 }
 
 function canEditJob($user,$jobid) {
+
     global  $settings;
     $time_limit = $settings->view_timeout_seconds;
+
+   // can edit this job if the time locked is null or exceeds the cutoff
+    // or the user is the same if viewing_user_id set
     $userid = $user->data()->id;
     $db = DB::getInstance();
     $db->query("Select id FROM ht_jobs where (viewing_user_id = $userid || viewing_user_id is NULL) AND ( ($time_limit <=  UNIX_TIMESTAMP() - viewing_user_at) ||  viewing_user_at is NULL) AND (id = ? );",[$jobid]);
