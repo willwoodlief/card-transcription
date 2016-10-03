@@ -6,24 +6,24 @@ This improves the first version:
   
 1) Fixed pages so only one person can checkout a job at a time. See:
 
-       https://github.com/willwoodlief/card-transcription/commit/ba523611ba099daa7bab156a5592100c9f8adebd
+    https://github.com/willwoodlief/card-transcription/commit/ba523611ba099daa7bab156a5592100c9f8adebd
 
 2) add in sns notification in admin options and settings, set up exception catching to send a notice. See:
   
-       https://github.com/willwoodlief/card-transcription/commit/072340feeffe75020422fb1e941299f5eb26703c
+    https://github.com/willwoodlief/card-transcription/commit/072340feeffe75020422fb1e941299f5eb26703c
 
 3) force all input to utf8. See:
         
-        https://github.com/willwoodlief/card-transcription/commit/6a5de51c27c7fbe63833d0df3ca1da415cd65dd8
+    https://github.com/willwoodlief/card-transcription/commit/6a5de51c27c7fbe63833d0df3ca1da415cd65dd8
 
 
 4) Change edited image sizes to 600 px wide and keeping the original aspect ratio. See:
   
-       https://github.com/willwoodlief/card-transcription/commit/b9d9efa5d324547675250a3a9323e7ed8dd1aa39
+    https://github.com/willwoodlief/card-transcription/commit/b9d9efa5d324547675250a3a9323e7ed8dd1aa39
 
 5) Change layout of job pages so that the form is on top and the edited images are in a row below that. See:
   
-       https://github.com/willwoodlief/card-transcription/commit/0ac3241f8cf05983b62a340b73073267e727f52b
+    https://github.com/willwoodlief/card-transcription/commit/0ac3241f8cf05983b62a340b73073267e727f52b
 
 
   TODO LIST
