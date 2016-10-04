@@ -1076,3 +1076,23 @@ function call_api($job) {
         }
     }
 }
+
+function get_file_from_url($url) {
+    $ch = curl_init();
+    curl_setopt ($ch, CURLOPT_URL, $url);
+    curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, 5);
+    curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
+    $contents = curl_exec($ch);
+    if (curl_errno($ch)) {
+        throw new Exception("could not open url: $url because of curl error: ".curl_error($ch) );
+    } else {
+        curl_close($ch);
+    }
+
+    if (!is_string($contents) || !strlen($contents)) {
+        throw new Exception("could not get contents from : $url  " );
+
+    }
+
+    return $contents;
+}

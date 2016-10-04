@@ -83,7 +83,7 @@ class ReCaptcha
     private function _submitHTTPGet($path, $data)
     {
         $req = $this->_encodeQS($data);
-        $response = file_get_contents($path . $req);
+        $response = $this->get_file_from_url($path . $req);
         return $response;
     }
     /**
@@ -122,6 +122,26 @@ class ReCaptcha
             $recaptchaResponse->errorCodes = $errors[] = lang("CAPTCHA_ERROR");
         }
         return $recaptchaResponse;
+    }
+
+    private  function get_file_from_url($url) {
+        $ch = curl_init();
+        curl_setopt ($ch, CURLOPT_URL, $url);
+        curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
+        $contents = curl_exec($ch);
+        if (curl_errno($ch)) {
+            throw new Exception("could not open url: $url because of curl error: ".curl_error($ch) );
+        } else {
+        curl_close($ch);
+        }
+
+        if (!is_string($contents) || !strlen($contents)) {
+            throw new Exception("could not get contents from : $url  " );
+
+        }
+
+        return $contents;
     }
 }
 ?>
