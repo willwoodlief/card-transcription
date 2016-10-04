@@ -143,7 +143,7 @@ $base64 = getDataURI($body,$mime_type);
         // Plugins options
         plugins: {
             crop: {
-                ratio: 1
+                ratio: 7.0/4.0
             },
             save:{
                 callback: function(){
