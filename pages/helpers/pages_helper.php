@@ -303,7 +303,14 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
 
 function restart_edit($jobid,$side) {
     //get the original image bucket and key for that side, resise it and overwrite the edited image
-    global $settings;
+
+    $sideT = 0;
+    $side_letter = 'a';
+    if ($side == 1 || (strcasecmp($side, 'b') == 0) ) {
+        $sideT = 1;
+        $side_letter = 'b';
+    }
+
     $db = DB::getInstance();
 
     $query = $db->query("select id,client_id,profile_id
@@ -318,12 +325,7 @@ function restart_edit($jobid,$side) {
 
 
 
-    $sideT = 0;
-    $side_letter = 'a';
-    if ($side == 1 || (strcasecmp($side, 'b') == 0) ) {
-        $sideT = 1;
-        $side_letter = 'b';
-    }
+
     $query = $db->query("select bucket_name,key_name,image_height,image_width ,image_type
                           from ht_images where ht_job_id = ? AND is_edited =0 AND side = ?",[$jobid,$sideT] );
 
@@ -644,6 +646,21 @@ function getGUID(){
 
         return $uuid;
     }
+}
+
+//usual curl wrapper, returns the http code, if the system does not have curl set up to work use the rest helper below
+function get_curl_resp_code($url) {
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_HEADER, true);    // we want headers
+    curl_setopt($ch, CURLOPT_NOBODY, true);    // we don't need body
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+    curl_setopt($ch, CURLOPT_TIMEOUT,10);
+    curl_exec($ch);
+    $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    return $httpcode;
 }
 
 //this allows us to post stuff without relying on curl, which some php environments do not have configured
@@ -1030,10 +1047,32 @@ function canEditJob($user,$jobid) {
     // or the user is the same if viewing_user_id set
     $userid = $user->data()->id;
     $db = DB::getInstance();
-    $db->query("Select id FROM ht_jobs where (viewing_user_id = $userid || viewing_user_id is NULL) AND ( ($time_limit <=  UNIX_TIMESTAMP() - viewing_user_at) ||  viewing_user_at is NULL) AND (id = ? );",[$jobid]);
+    $where_string = "(id = ? ) AND ( (viewing_user_id = $userid ) OR (viewing_user_id is NULL) OR ($time_limit <=  UNIX_TIMESTAMP() - viewing_user_at) ||  (viewing_user_at is NULL) ) ";
+    $db->query("Select id FROM ht_jobs where $where_string ;",[$jobid]);
     if ( ( !$db->count() ) || ($db->count() <= 0)) {
         return false;
     } else {
         return true;
+    }
+}
+
+function call_api($job) {
+   $base_url = Config::get('api/on_check');
+    $query = [];
+   if (!empty($job->transcribe->email) )  {
+       array_push($query , 'email='. urlencode($job->transcribe->email));
+   }
+
+    if (!empty(trim($job->transcribe->website)) )  {
+        array_push($query , 'url='. urlencode($job->transcribe->website));
+    }
+    $q = implode('&',$query);
+
+    if (!empty($q)) {
+        $full_url = $base_url . '&' . $q;
+        $resp = get_curl_resp_code($full_url);
+        if ($resp != 200 && $resp != 404) {
+            publish_to_sns("Could not send api information", "While sending, got the response code of : $resp . The url was $full_url");
+        }
     }
 }

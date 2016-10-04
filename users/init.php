@@ -54,6 +54,9 @@ $GLOBALS['config'] = array(
     'contact' => array(
         'email' => getenv('EMERGENCY_EMAIL'),
 
+    ),
+    'api'  => array(
+        'on_check'=> getenv('API_ON_FINISH')
     )
 );
 

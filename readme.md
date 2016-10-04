@@ -15,15 +15,15 @@ This improves the first version:
 
 5) Change layout of job pages so that the form is on top and the edited images are in a row below that. See: https://github.com/willwoodlief/card-transcription/commit/0ac3241f8cf05983b62a340b73073267e727f52b
 
-
+6) Changed crop tool to select a rectangle the same ratio of width/length as index card (7/4). See: https://github.com/willwoodlief/card-transcription/commit/1cc7d3fb0b96e5c41fed1c14a0a98a000d7bc2bf
+  
   TODO LIST
   ---------------
 
-6) Black and White button needs to restore to color after clicking twice
+7) Black and White button needs to restore to color after clicking twice
    * Since black and white is a destructive operation need to achieve this by redoing the history to the beginning (rewinding it), taking out the black and white transformations, and then applying the history again automatically
    * need to change some of the library code so we can tag the transformations, and also have a hook to undo all,delete transfromation by tag, and then re-apply exiting transformations
 
-7) Crop tool is currently square rectangle, change crop size to a rectangle with an aspect ratio of 7 : 4 or 600X343
 
 8) Api hook : add api call as described in the pdf, have option to test it without calling api to make sure its working okay
 

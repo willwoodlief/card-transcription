@@ -68,6 +68,7 @@ if(!empty($_POST['approve'])) {
     clearJobViewStamp($jobid);
     if ($user && $user->roles()  && in_array("Administrator", $user->roles())) {
         $what = $db->update('ht_jobs', $jobid, ['checker_user_id'=>$user->data()->id,'checked_at'=> time()]);
+        call_api($job);
         if (!$what) {
             $validation->addError($db->error());
             $error_count ++;
@@ -78,6 +79,7 @@ if(!empty($_POST['approve'])) {
     }
     elseif ($user && $user->roles()  && in_array("Checker", $user->roles())) {
         $what = $db->update('ht_jobs', $jobid, ['checker_user_id'=>$user->data()->id,'checked_at'=> time()]);
+        call_api($job);
         if (!$what) {
             $validation->addError($db->error());
             $error_count ++;
@@ -130,6 +132,7 @@ if(!empty($_POST['transcribe'])) {
         if ($user && $user->roles()  && in_array("Administrator", $user->roles())) {
             if ($job->translater->id) {
                 $what = $db->update('ht_jobs', $jobid, ['checker_user_id'=>$user->data()->id,'checked_at'=> time()]);
+                call_api($job);
             } else {
                 $what = $db->update('ht_jobs', $jobid, ['transcriber_user_id'=>$user->data()->id,'transcribed_at'=> time()]);
             }
@@ -145,6 +148,7 @@ if(!empty($_POST['transcribe'])) {
         elseif ($user && $user->roles()  && in_array("Checker", $user->roles())) {
             if ($job->translater->id) {
                 $what = $db->update('ht_jobs', $jobid, ['checker_user_id'=>$user->data()->id,'checked_at'=> time()]);
+                call_api($job);
             } else {
                 $what = $db->update('ht_jobs', $jobid, ['transcriber_user_id'=>$user->data()->id,'transcribed_at'=> time()]);
             }
