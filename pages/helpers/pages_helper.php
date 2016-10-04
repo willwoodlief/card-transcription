@@ -847,7 +847,8 @@ function mkdir_r($dirName, $rights=0777){
 }
 
 function test_site_connection($theURL) {
-    if(intval(get_http_response_code($theURL)) < 400){
+    $resp = intval(get_curl_resp_code($theURL));
+    if($resp >=200 && $resp < 400){
         return true;
     }
 

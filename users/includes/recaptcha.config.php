@@ -131,7 +131,8 @@ class ReCaptcha
         curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
         $contents = curl_exec($ch);
         if (curl_errno($ch)) {
-            throw new Exception("could not open url: $url because of curl error: ".curl_error($ch) );
+            $error = curl_errno($ch);
+            throw new Exception(" [$error]could not open url: $url because of curl error: ".curl_error($ch) );
         } else {
         curl_close($ch);
         }
