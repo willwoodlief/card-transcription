@@ -17,17 +17,21 @@ This improves the first version:
 
 6) Changed crop tool to select a rectangle the same ratio of width/length as index card (7/4). See: https://github.com/willwoodlief/card-transcription/commit/1cc7d3fb0b96e5c41fed1c14a0a98a000d7bc2bf
   
+7) Added api hook, this url is configured in the private init setup which,  the private setup contains specific info and as security measure, is not uploaded to repo. See: https://github.com/willwoodlief/card-transcription/commit/36583d540c4e822da3c750e4634851f628431f9d 
+
+8) Made the zoom buttons show the larger image in a better more accessable place on the screen. Now a person does not have to scroll up to the image to look at it. This change was done in step (5)
+ 
+ 
+Added new blank database in install, and updated  users/private_init.example.php to show how to add api key
+
   TODO LIST
   ---------------
 
-7) Black and White button needs to restore to color after clicking twice
+9) Black and White button needs to restore to color after clicking twice
    * Since black and white is a destructive operation need to achieve this by redoing the history to the beginning (rewinding it), taking out the black and white transformations, and then applying the history again automatically
    * need to change some of the library code so we can tag the transformations, and also have a hook to undo all,delete transfromation by tag, and then re-apply exiting transformations
 
 
-8) Api hook : add api call as described in the pdf, have option to test it without calling api to make sure its working okay
-
-9) add better magnification tool and process
 
 
 

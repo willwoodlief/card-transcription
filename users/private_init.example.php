@@ -25,3 +25,6 @@ putenv("CAPTCHA_SECRET= the captch secret goes here");
 
 //contact info
 putenv("EMERGANCY_EMAIL",'some_email@gmail.com');
+
+//api call
+putenv("API_ON_FINISH=http://someurl.com?key=somekey");
