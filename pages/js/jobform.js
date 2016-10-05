@@ -54,7 +54,7 @@ function clear_alive() {
 
         },
         "json"  ).fail(function() {
-        show_error_message('Could not connect to server');
+        //show_error_message('Could not connect to server');
     });
 }
 
