@@ -15,6 +15,29 @@ require_once $abs_us_root.$us_url_root.'users/includes/header_not_closed.php';
         left:100px;
         z-index: 999;
     }
+
+    .form-group {
+        margin-bottom: 5px;
+    }
+
+    .form-control {
+        padding: 10px 5px;
+    }
+
+    .input-job-box {
+        padding: 5px;
+        font-size: 12px;
+        height: 30px;
+    }
+
+    .input-job-label {
+        font-size: 12px;
+    }
+
+    .input-job-group {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
 </style>
 
 </head>
@@ -196,11 +219,13 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
 ?>
 
 <div id="page-wrapper" style="">
+    <?php if ($error_count> 0) { ?>
     <div class="row">
         <div id="form-errors" class="col-sm-offset-2 col-sm-4">
             <?=$validation->display_errors();?>
         </div>
     </div>
+    <?php } ?>
 	<div class="container-fluid">
 		<!-- Page Heading -->
         <?php if ($b_is_checker && $job->translater->id) { ?>
@@ -234,107 +259,112 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
 
                             <input type="hidden" name="jobid" value="<?=$job->job->id ?>" >
 
-                            <div class="form-group col-xs-2" style="">
+                            <div class="form-group col-xs-1 input-job-group" style="">
 
-                                <label for="fname" class=" control-label">First Name</label>
-                                <input type="text" class=".input-md a-job-form form-control" name="fname" id="fname" value="<?=$job->transcribe->fname ?>">
+                                <label for="fname" class=" control-label input-job-label">First Name</label>
+                                <input type="text" class=".input-md a-job-form form-control input-job-box" name="fname" id="fname" value="<?=$job->transcribe->fname ?>">
                             </div>
 
-                            <div class="form-group  col-xs-1">
-                                <label for="mname">Middle</label>
-                                <input type="text" class="form-control" name="mname" id="mname" value="<?=$job->transcribe->mname ?>">
+                            <div class="form-group  col-xs-1 input-job-group">
+                                <label for="mname" class="input-job-label">Middle</label>
+                                <input type="text" class="form-control input-job-box" name="mname" id="mname" value="<?=$job->transcribe->mname ?>">
                             </div>
 
-                            <div class="form-group  col-xs-3">
-                                <label for="lname">Last Name</label>
-                                <input type="text" class="form-control" name="lname" id="lname" value="<?=$job->transcribe->lname ?>">
+                            <div class="form-group  col-xs-1 input-job-group">
+                                <label for="lname" class="input-job-label" >Last Name</label>
+                                <input type="text" class="form-control input-job-box" name="lname" id="lname" value="<?=$job->transcribe->lname ?>">
                             </div>
 
 
 
-                            <div class="form-group  col-xs-1">
-                                <label for="suffix">Suffix</label>
-                                <input type="text" class="form-control" name="suffix" id="suffix" value="<?=$job->transcribe->suffix ?>">
+                            <div class="form-group  col-xs-1 input-job-group">
+                                <label for="suffix" class="input-job-label">Suffix</label>
+                                <input type="text" class="form-control input-job-box" name="suffix" id="suffix" value="<?=$job->transcribe->suffix ?>">
                             </div>
 
-                            <div class="form-group col-xs-2">
-                                <label for="other_category">Title</label>
-                                <input type="text" class="form-control" name="other_category" id="other_category" value="<?=$job->transcribe->other_category ?>">
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="other_category" class="input-job-label">Title</label>
+                                <input type="text" class="form-control input-job-box" name="other_category" id="other_category" value="<?=$job->transcribe->other_category ?>">
                             </div>
 
-                            <div class="form-group col-xs-2">
-                                <label for="designations">Designations</label>
-                                <input type="text" class="form-control" name="designations" id="designations" value="<?=$job->transcribe->designations ?>">
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="designations" class="input-job-label">Designations</label>
+                                <input type="text" class="form-control input-job-box" name="designations" id="designations" value="<?=$job->transcribe->designations ?>">
                             </div>
 
                             <!-- this field can be used later for additional stuff with title, originated when spec was a little different and no need to take it out -->
 
+                            <div class="form-group  col-xs-2 input-job-group">
+                                <label for="address" class="input-job-label">Address</label>
+                                <input type="text" class="form-control input-job-box" name="address" id="address" value="<?=$job->transcribe->address ?>">
+                            </div>
+
+                            <div class="form-group  col-xs-1 input-job-group">
+                                <label for="zip"  class="input-job-label" style="white-space: nowrap "  >Zip <span style="font-size: smaller;white-space: nowrap " class="input-job-label">(auto fill)<span> </label>
+                                <input type="text" class="form-control input-job-box" name="zip" id="zip" value="<?=$job->transcribe->zip ?>">
+
+                            </div>
+
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="city" class="input-job-label">City</label>
+                                <input type="text" class="form-control input-job-box" name="city" id="city" value="<?=$job->transcribe->city ?>">
+                            </div>
+
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="state" class="input-job-label">State</label>
+                                <input type="text" class="form-control input-job-box" name="state" id="state" value="<?=$job->transcribe->state ?>">
+                            </div>
+
                         </div>
 
 
-                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="">
+                        <div class="col-xs-12 " style="">
 
-                            <div class="form-group  col-xs-3">
-                                <label for="address">Address</label>
-                                <input type="text" class="form-control" name="address" id="address" value="<?=$job->transcribe->address ?>">
+
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="phone" class="input-job-label">Phone</label>
+                                <input type="text" class="form-control input-job-box" name="phone" id="phone" value="<?=$job->transcribe->phone ?>">
                             </div>
 
-                            <div class="form-group  col-xs-1">
-                                <label for="zip" style="white-space: nowrap ">Zip <span style="font-size: smaller;white-space: nowrap ">(auto fill)<span> </label>
-                                <input type="text" class="form-control" name="zip" id="zip" value="<?=$job->transcribe->zip ?>">
-                                <span class="help-block"></span>
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="cell_phone" class="input-job-label">Cell Phone</label>
+                                <input type="text" class="form-control input-job-box" name="cell_phone" id="cell_phone" value="<?=$job->transcribe->cell_phone ?>">
                             </div>
 
-                            <div class="form-group col-xs-2">
-                                <label for="city">City</label>
-                                <input type="text" class="form-control" name="city" id="city" value="<?=$job->transcribe->city ?>">
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="fax"  class="input-job-label">Fax</label>
+                                <input type="text" class="form-control input-job-box" name="fax" id="fax" value="<?=$job->transcribe->fax ?>">
                             </div>
 
-                            <div class="form-group col-xs-2">
-                                <label for="state">State</label>
-                                <input type="text" class="form-control" name="state" id="state" value="<?=$job->transcribe->state ?>">
+                            <div class="form-group col-sm-1 input-job-group">
+                                <label for="email" class="input-job-label" >Email</label>
+                                <input type="text" class="form-control input-job-box" name="email" id="email" value="<?=$job->transcribe->email ?>">
                             </div>
 
-                            <div class="form-group col-xs-2">
-                                <label for="phone">Phone</label>
-                                <input type="text" class="form-control" name="phone" id="phone" value="<?=$job->transcribe->phone ?>">
+                            <div class="form-group col-sm-2 input-job-group">
+                                <label for="website"  class="input-job-label">Website</label>
+                                <input type="text" class="form-control input-job-box" name="website" id="website" value="<?=$job->transcribe->website ?>">
                             </div>
 
-                            <div class="form-group col-xs-2">
-                                <label for="cell_phone">Cell Phone</label>
-                                <input type="text" class="form-control" name="cell_phone" id="cell_phone" value="<?=$job->transcribe->cell_phone ?>">
+
+                            <div class="form-group col-sm-1 input-job-group">
+                                <label for="skype" class="input-job-label">Skype</label>
+                                <input type="text" class="form-control input-job-box" name="skype" id="skype" value="<?=$job->transcribe->skype ?>">
+                            </div>
+
+                            <div class="form-group col-sm-2 input-job-group">
+                                <label for="" class="input-job-label"></label>
+                                <input class='btn btn-primary input-job-box' type='submit' name="transcribe" value='Save Transcription' />
                             </div>
 
                         </div> <!-- Third row -->
 
-                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="">
+                        <div class="col-xs-12" style="">
 
 
-                            <div class="form-group col-xs-2">
-                                <label for="fax">Fax</label>
-                                <input type="text" class="form-control" name="fax" id="fax" value="<?=$job->transcribe->fax ?>">
-                            </div>
-
-                            <div class="form-group col-sm-2">
-                                <label for="email">Email</label>
-                                <input type="text" class="form-control" name="email" id="email" value="<?=$job->transcribe->email ?>">
-                            </div>
-
-                            <div class="form-group col-sm-3">
-                                <label for="website">Website</label>
-                                <input type="text" class="form-control" name="website" id="website" value="<?=$job->transcribe->website ?>">
-                            </div>
 
 
-                            <div class="form-group col-sm-2">
-                                <label for="skype">Skype</label>
-                                <input type="text" class="form-control" name="skype" id="skype" value="<?=$job->transcribe->skype ?>">
-                            </div>
 
-                            <div class="form-group col-sm-2">
-                                <label for="skype"></label>
-                                <input class='btn btn-primary' type='submit' name="transcribe" value='Save Transcription' />
-                            </div>
 
 
                         </div> <!-- Fourth row -->
