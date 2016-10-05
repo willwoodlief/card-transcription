@@ -666,56 +666,45 @@ function get_curl_resp_code($url) {
 //this allows us to post stuff without relying on curl, which some php environments do not have configured
 function rest_helper($url, $params = null, $verb = 'GET', $format = 'json')
 {
-    $cparams = array(
-        'http' => array(
-            'method' => $verb,
-            'ignore_errors' => true,
-            'header' => "Content-Type: application/x-www-form-urlencoded\r\n".
-                                        "User-Agent:MyAgent/1.0\r\n"
-        )
-    );
-    if ($params !== null) {
-        $params = http_build_query($params);
-        if ($verb == 'POST') {
-            $cparams['http']['content'] = $params;
-        } else {
-            $url .= '?' . $params;
-        }
-    }
+    $ch = curl_init();
 
-    $context = stream_context_create($cparams);
-    $fp = @fopen($url, 'rb', false, $context);
-    if (!$fp) {
-        $res = false;
-    } else {
-        // If you're trying to troubleshoot problems, try uncommenting the
-        // next two lines; it will show you the HTTP response headers across
-        // all the redirects:
-        // $meta = stream_get_meta_data($fp);
-        // var_dump($meta['wrapper_data']);
-        $res = @stream_get_contents($fp);
-    }
+    curl_setopt($ch, CURLOPT_URL,$url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
 
-    if ($res === false) {
-        throw new Exception("$verb $url failed: $php_errormsg");
+
+    // receive server response ...
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $server_output = curl_exec ($ch);
+
+    $httpcode = intval(curl_getinfo($ch, CURLINFO_HTTP_CODE));
+    if ($httpcode == 0 || $httpcode >= 400) {
+        throw new Exception("Could not send data, response was ".$httpcode);
     }
+    curl_close ($ch);
 
     switch ($format) {
         case 'json':
-            $r = json_decode($res);
+            $r = json_decode($server_output);
             if ($r === null) {
-                throw new Exception("failed to decode $res as json");
+                throw new Exception("failed to decode $server_output as json");
             }
             return $r;
 
         case 'xml':
-            $r = simplexml_load_string($res);
+            $r = simplexml_load_string($server_output);
             if ($r === null) {
-                throw new Exception("failed to decode $res as xml");
+                throw new Exception("failed to decode $server_output as xml");
             }
             return $r;
+        default: {
+            $r = $server_output;
+        }
     }
-    return $res;
+    return $r;
+
+
 }
 
 
