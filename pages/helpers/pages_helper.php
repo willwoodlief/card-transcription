@@ -656,6 +656,9 @@ function get_curl_resp_code($url) {
     curl_setopt($ch, CURLOPT_NOBODY, true);    // we don't need body
     curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
     curl_setopt($ch, CURLOPT_TIMEOUT,10);
+    if (isLocalHost()) {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    }
     curl_exec($ch);
     $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
@@ -672,7 +675,9 @@ function rest_helper($url, $params = null, $verb = 'GET', $format = 'json')
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
 
-
+    if (isLocalHost()) {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    }
     // receive server response ...
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
@@ -1072,6 +1077,9 @@ function get_file_from_url($url) {
     curl_setopt ($ch, CURLOPT_URL, $url);
     curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, 5);
     curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
+    if (isLocalHost()) {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    }
     $contents = curl_exec($ch);
     if (curl_errno($ch)) {
         throw new Exception("could not open url: $url because of curl error: ".curl_error($ch) );

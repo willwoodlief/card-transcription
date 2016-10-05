@@ -54,6 +54,11 @@ class CurlFactory implements CurlFactoryInterface
         $easy->handle = $this->handles
             ? array_pop($this->handles)
             : curl_init();
+
+        if( in_array( $_SERVER['REMOTE_ADDR'], array( '127.0.0.1', '::1' ) ) ) {
+            $conf[CURLOPT_SSL_VERIFYPEER] = false;
+        }
+
         curl_setopt_array($easy->handle, $conf);
 
         return $easy;

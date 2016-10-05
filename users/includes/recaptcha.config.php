@@ -129,6 +129,10 @@ class ReCaptcha
         curl_setopt ($ch, CURLOPT_URL, $url);
         curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, 5);
         curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
+        if (isLocalHost()) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        }
+
         $contents = curl_exec($ch);
         if (curl_errno($ch)) {
             $error = curl_errno($ch);
