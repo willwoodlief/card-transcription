@@ -88,7 +88,9 @@ class User {
 				}
                 $this->_roles = $this->get_user_role_strings($this->_data->id);
 				return true;
-			}
+			} else {
+
+            }
 		}
 		return false;
 	}

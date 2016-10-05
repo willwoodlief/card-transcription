@@ -671,7 +671,7 @@ function get_curl_resp_code($url) {
     curl_setopt($ch, CURLOPT_NOBODY, true);    // we don't need body
     curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
     curl_setopt($ch, CURLOPT_TIMEOUT,10);
-    if (isLocalHost()) {
+    if (_pages_isLocalHost()) {
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     }
     curl_exec($ch);
@@ -690,7 +690,7 @@ function rest_helper($url, $params = null, $verb = 'GET', $format = 'json')
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
 
-    if (isLocalHost()) {
+    if (_pages_isLocalHost()) {
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     }
     // receive server response ...
@@ -1092,7 +1092,7 @@ function get_file_from_url($url) {
     curl_setopt ($ch, CURLOPT_URL, $url);
     curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, 5);
     curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
-    if (isLocalHost()) {
+    if (_pages_isLocalHost()) {
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     }
     $contents = curl_exec($ch);
@@ -1108,4 +1108,16 @@ function get_file_from_url($url) {
     }
 
     return $contents;
+}
+
+function _pages_isLocalHost() {
+    if (isset($_SERVER['REMOTE_ADDR'])) {
+        if( in_array( $_SERVER['REMOTE_ADDR'], array( '127.0.0.1', '::1' ) ) ) {
+            return true;
+        }
+    }
+
+
+    return false;
+
 }
