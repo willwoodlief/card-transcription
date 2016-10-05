@@ -62,10 +62,12 @@ class DB {
 				$this->_resultsArray = json_decode(json_encode($this->_results),true);
 				$this->_count = $this->_query->rowCount();
 				$this->_lastId = $this->_pdo->lastInsertId();
+                $this->_query->closeCursor();
 			} else{
 				$this->_error = true;
                 $this->_errorInfo = $this->_pdo->errorInfo();
 			}
+
 		}
 		return $this;
 	}
