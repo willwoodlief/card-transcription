@@ -31,12 +31,15 @@ class DB {
 				Config::get('mysql/username'), 
 				Config::get('mysql/password'),
 				array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET SESSION sql_mode = ''"));
+            // $this->_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		} catch(PDOException $e){
 			die($e->getMessage());
 		}
 	}
 
 	public static function getInstance(){
+	    return new DB();
+
 		if (!isset(self::$_instance)) {
 			self::$_instance = new DB();
 		}
@@ -62,7 +65,7 @@ class DB {
 				$this->_resultsArray = json_decode(json_encode($this->_results),true);
 				$this->_count = $this->_query->rowCount();
 				$this->_lastId = $this->_pdo->lastInsertId();
-                $this->_query->closeCursor();
+
 			} else{
 				$this->_error = true;
                 $this->_errorInfo = $this->_pdo->errorInfo();
