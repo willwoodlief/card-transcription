@@ -1,8 +1,8 @@
 <?php
 //will upload all unless is set
-
-require_once '../lib/ForceUTF8/Encoding.php';
-require_once '../lib/aws/aws-autoloader.php';
+$real =   realpath( dirname( __FILE__ ) );
+require_once $real.'/../../lib/ForceUTF8/Encoding.php';
+require_once $real.'/../../lib/aws/aws-autoloader.php';
 
 
 function publish_to_sns($title,$message) {
