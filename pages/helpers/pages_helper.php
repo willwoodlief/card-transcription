@@ -7,9 +7,18 @@ require_once $real.'/../../lib/aws/aws-autoloader.php';
 
 function publish_to_sns($title,$message) {
     global  $settings;
+
+    # get settings if not set already
+    if (! isset($settings)) {
+        $db = DB::getInstance();
+        $settingsQ = $db->query("Select * FROM settings");
+        $settings = $settingsQ->first();
+    }
+
     if (!$settings->sns_arn || empty($settings->sns_arn) ) {
         return;
     }
+
 
     $sharedConfig = [
         'region'  => getenv('AWS_REGION'),
@@ -20,9 +29,15 @@ function publish_to_sns($title,$message) {
     $sdk = new Aws\Sdk($sharedConfig);
 
     $client = $sdk->createSns();
+
+    $message_to_send =  to_utf8($message);
+    if (is_array($message)) {
+        $message_to_send = json_encode($message_to_send);
+    }
+
     $payload = array(
         'TopicArn' => $settings->sns_arn,
-        'Message' => to_utf8($message),
+        'Message' => $message_to_send,
         'Subject' => to_utf8($title),
         'MessageStructure' => 'string',
     );

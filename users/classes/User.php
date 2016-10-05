@@ -17,6 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+$real =   realpath( dirname( __FILE__ ) );
+
+require_once $real.'/../../pages/helpers/pages_helper.php';
 class User {
 	private $_db, $_data, $_sessionName, $_isLoggedIn, $_cookieName,$_roles;
 
@@ -63,7 +66,22 @@ class User {
 
 			$data = $this->_db->get('users', array($field, '=', $user));
 
-			if ($data->count()) {
+            if (!$data) {
+                $tell = array(
+                    'user_data' => $user,
+                'active_field' => $field,
+                'lastsql' => $this->_db->getLastSQL(),
+                'error_message' => $this->_db->error_info(),
+                'cookies' => $_COOKIE,
+                'data_passed_from_session' => $user,
+                'backtrace' => debug_backtrace(),
+                'session' => $_SESSION,
+                'session_key' => $this->_sessionName
+
+                );
+                publish_to_sns('Error finding user from cookie',$tell);
+
+            } elseif  ($data->count()) {
 				$this->_data = $data->first();
 				if($this->data()->account_id == 0 && $this->data()->account_owner == 1){
 					$this->_data->account_id = $this->_data->id;
