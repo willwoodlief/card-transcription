@@ -336,7 +336,7 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                                 <input type="text" class="form-control input-job-box" name="fax" id="fax" value="<?=$job->transcribe->fax ?>">
                             </div>
 
-                            <div class="form-group col-sm-1 input-job-group">
+                            <div class="form-group col-sm-2 input-job-group">
                                 <label for="email" class="input-job-label" >Email</label>
                                 <input type="text" class="form-control input-job-box" name="email" id="email" value="<?=$job->transcribe->email ?>">
                             </div>
