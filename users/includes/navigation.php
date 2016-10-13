@@ -75,21 +75,9 @@ $email_act=$results->email_act;
 
 
 
-                    <?php if (in_array("Uploader", $user->roles())) { ?>
-                        <li class="hidden-sm hidden-md hidden-lg"><a href="<?=$us_url_root?>pages/upload.php"><i class="fa fa-fw fa-upload"></i> Upload </a></li> <!-- Common for Hamburger and Regular menus link -->
-                    <?php } ?>
 
-                    <?php if (in_array("Transcriber", $user->roles())) { ?>
-                        <li class="hidden-sm hidden-md hidden-lg"><a href="<?=$us_url_root?>pages/transcribe.php"><i class="fa fa-fw fa-pencil"></i> Transcribe </a></li> <!-- Common for Hamburger and Regular menus link -->
-                    <?php } ?>
 
-                    <?php if (in_array("Checker", $user->roles())) { ?>
-                        <li class="hidden-sm hidden-md hidden-lg"><a href="<?=$us_url_root?>pages/check.php"><i class="fa fa-fw fa-check-square-o"></i> Checker </a></li> <!-- Common for Hamburger and Regular menus link -->
-                    <?php } ?>
 
-                    <?php if (in_array("Administrator", $user->roles())) { ?>
-                        <li class="hidden-sm hidden-md hidden-lg"><a href="<?=$us_url_root?>pages/status.php"><i class="fa fa-fw fa-dashboard"></i> Status </a></li> <!-- Common for Hamburger and Regular menus link -->
-                    <?php } ?>
 
                     <?php if (checkMenu(2,$user->data()->id)){  //Links for permission level 2 (default admin) ?>
 						<li class="hidden-sm hidden-md hidden-lg"><a href="<?=$us_url_root?>users/admin.php"><i class="fa fa-fw fa-cogs"></i> Admin Dashboard</a></li> <!-- Hamburger menu link -->
