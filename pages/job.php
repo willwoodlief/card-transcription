@@ -127,7 +127,7 @@ if(!empty($_POST['transcribe'])) {
     $fields_to_check = [
         'fname','mname','lname','suffix',
         'designations','address','city','state','zip',
-        'email','website','phone','cell_phone','fax','skype','other_category','other_value'];
+        'email','website','phone','cell_phone','fax','skype','other_category','other_value','company'];
 
     $fields = [];
 
@@ -339,6 +339,11 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                             <div class="form-group col-sm-2 input-job-group">
                                 <label for="email" class="input-job-label" >Email</label>
                                 <input type="text" class="form-control input-job-box" name="email" id="email" value="<?=$job->transcribe->email ?>">
+                            </div>
+
+                            <div class="form-group col-sm-2 input-job-group">
+                                <label for="company" class="input-job-label" >Company</label>
+                                <input type="text" class="form-control input-job-box" name="company" id="company" value="<?=$job->transcribe->company ?>">
                             </div>
 
                             <div class="form-group col-sm-2 input-job-group">

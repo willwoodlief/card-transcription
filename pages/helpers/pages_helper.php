@@ -671,10 +671,19 @@ function get_curl_resp_code($url) {
     curl_setopt($ch, CURLOPT_NOBODY, true);    // we don't need body
     curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
     curl_setopt($ch, CURLOPT_TIMEOUT,10);
+    curl_setopt($ch, CURLOPT_VERBOSE, true);
+
+    $verbose = fopen('php://temp', 'w+');
+    curl_setopt($ch, CURLOPT_STDERR, $verbose);
+
     if (_pages_isLocalHost()) {
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     }
     curl_exec($ch);
+   // $verboseLog = stream_get_contents($verbose);
+
+   // echo "Verbose information:\n<pre>", htmlspecialchars($verboseLog), "</pre>\n";
+  //  exit;
     $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
@@ -940,7 +949,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
           
           j.fname, j.mname, j.lname, j.suffix, j.designations,
           j.address, j.city, j.state, j.zip, j.email, j.website, j.phone,
-          j.cell_phone, j.fax, j.skype,j.other_category, j.other_value,
+          j.cell_phone, j.fax, j.skype,j.other_category, j.other_value,j.company,
           utrans.id as utrans_id,utrans.email as utrans_email, utrans.fname as utrans_fname, utrans.lname as utrans_lname,
           uchecks.id as uchecks_id,uchecks.email as uchecks_email, uchecks.fname as uchecks_fname, uchecks.lname as uchecks_lname,
 
@@ -987,7 +996,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
             'address' => $rec->address, 'city' => $rec->city, 'state' => $rec->state, 'zip' => $rec->zip, 'email' => $rec->email,
             'website' => $rec->website, 'phone' => $rec->phone,
             'cell_phone' => $rec->cell_phone, 'fax' => $rec->fax, 'skype' => $rec->skype,'other_category'=> $rec->other_category,
-            'other_value'=>$rec->other_value
+            'other_value'=>$rec->other_value,'company'=>$rec->company
         ];
         
         $translater = [
