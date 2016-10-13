@@ -1,3 +1,19 @@
+Update 2.0
+------
+Project 2
+
+1) Added migrations (https://github.com/robmorgan/phinx). To update database to current changes goto top of app directory and type: php bin/phinx.phar  migrate -e dev . If pulling in changes this will probably be same directory. Production database can be done with way too now, with the -e production flag instead of the -e dev
+
+2) Added more configeration settings for the database, these are optional but probably need to add the DB_CHARSET option if your database does not automatically connect as utf-8. Also need to set the production database settings if needing to update production database from local machine
+
+3) Added in new app configeration set in admin section : folder_watch (added by migration above)
+
+4) Added in new table file_watching (added by migration above)
+
+5) Added in stub for the scan folder task which already gets the information in the watched folder
+
+
+
 update 1.1
 ------
 

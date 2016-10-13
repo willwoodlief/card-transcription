@@ -42,6 +42,7 @@ $GLOBALS['config'] = array(
         'username'     => getenv('DB_USERNAME'),
         'password'     => getenv('DB_PASSWORD'),
         'db'           =>  getenv('DB_NAME'),
+        'charset'       => getenv('DB_CHARSET'),
     ),
     'remember'        => array(
         'cookie_name'   => 'pmqesoxiw318374csb',

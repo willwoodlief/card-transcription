@@ -25,9 +25,13 @@ class DB {
 
 	private function __construct(){
 		try{
+		    $charset_string = '';
+            if (Config::get('mysql/charset')) {
+                $charset_string = ';charset='. Config::get('mysql/charset');
+            }
 			$this->_pdo = new PDO('mysql:host=' .
 				Config::get('mysql/host') .';dbname='. 
-				Config::get('mysql/db'), 
+				Config::get('mysql/db').$charset_string,
 				Config::get('mysql/username'), 
 				Config::get('mysql/password'),
 				array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET SESSION sql_mode = ''"));

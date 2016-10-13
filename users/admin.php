@@ -139,7 +139,12 @@ if(!empty($_POST['settings'])){
 		$db->update('settings',1,$fields);
 	}
 
-    #
+	if($settings->sns_arn != $_POST['folder_watch']) {
+		$vts = Input::get('folder_watch');
+		$fields=array('folder_watch'=>$vts);
+		$db->update('settings',1,$fields);
+	}
+
 
 
 	Redirect::to('admin.php');
@@ -347,6 +352,15 @@ if(file_exists($abs_us_root.$us_url_root.'usersc/includes/admin_panels.php')){
 			<label for="sns_arn">SNS Topic Arn <span style="font-size: smaller"> This is used to send notifications about problems on the server</span> </label>
 			<input type="text" class="form-control" name="sns_arn" id="sns_arn" value="<?=$settings->sns_arn?>">
 		</div>
+
+
+		<!-- folder_watch  -->
+		<div class="form-group">
+			<label for="folder_watch">Folder Watch <span style="font-size: smaller"> Scan Folder keeps track of files added here (non recursive)</span> </label>
+			<input type="text" class="form-control" name="folder_watch" id="folder_watch" value="<?=$settings->folder_watch?>">
+		</div>
+
+
 
 
 
