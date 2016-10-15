@@ -20,7 +20,7 @@
             <li><a href="<?=$us_url_root?>pages/status.php"><i class="fa fa-fw fa-dashboard"></i> Status </a></li> <!-- Common for Hamburger and Regular menus link -->
         <?php } ?>
 
-        <?php if (in_array("User", $user->roles())) { ?>
+        <?php if ($user->roles() && in_array("User", $user->roles())) { ?>
             <li><a href="<?=$us_url_root?>pages/help.php"><i class="fa fa-fw fa-question-circle"></i> Help </a></li> <!-- Common for Hamburger and Regular menus link -->
         <?php } ?>
 

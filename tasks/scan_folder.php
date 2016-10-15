@@ -5,44 +5,36 @@ if ($isRunningFromBrowser) {
 }
 $localroot =   realpath( dirname( __FILE__ ) );
 require_once $localroot.'/../users/private_init.php';
+require_once $localroot.'/../users/init.cli.php';
 
-// Set config
-$GLOBALS['config'] = array(
-    'mysql'      => array(
-        'host'         => getenv('DB_HOST'),
-        'username'     => getenv('DB_USERNAME'),
-        'password'     => getenv('DB_PASSWORD'),
-        'db'           =>  getenv('DB_NAME'),
-        'charset'       => getenv('DB_CHARSET'),
-    ),
-    'remember'        => array(
-        'cookie_name'   => 'pmqesoxiw318374csb',
-        'cookie_expiry' => 604800  //One week, feel free to make it longer
-    ),
-    'session' => array(
-        'session_name' => 'user',
-        'token_name' => 'token',
-    )
-);
-
-
-require_once $localroot.'/../users/classes/Config.php';
-require_once $localroot.'/../users/classes/DB.php';
-require_once $localroot.'/../lib/aws/aws-autoloader.php';
+require_once $localroot.'/../lib/file_watching.php';
 require_once $localroot.'/../pages/helpers/pages_helper.php';
-require_once $localroot.'/../pages/helpers/mime_type.php';
+
+
+
 
 $db = DB::getInstance();
 $settingsQ = $db->query("Select * FROM settings");
 $settings = $settingsQ->first();
-
 $folder_to_watch = $settings->folder_watch;
+$filter_rule = $settings->folder_watch_filter_rgx;
+$group_rules = $settings->folder_watch_group_rgx;
+
+$side_a = $settings->folder_watch_side_a_match;
 
 
 
+$watcher = new FileWatching($folder_to_watch,$filter_rule,$group_rules,$side_a);
 
-foreach (new DirectoryIterator($folder_to_watch) as $fileInfo) {
-    if($fileInfo->isDot()) continue;
-    echo $fileInfo->getMTime() ." -->";
-    echo $fileInfo->getPath(). '/'. $fileInfo->getFilename() . "\n";
+$watcher->iterate_pairs('pass_along_pairs');
+
+function pass_along_pairs($side_a,$side_b) {
+    print "side a: $side_a\n side b: $side_b";
+    return true;
 }
+
+
+
+
+
+

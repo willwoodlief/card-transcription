@@ -139,13 +139,30 @@ if(!empty($_POST['settings'])){
 		$db->update('settings',1,$fields);
 	}
 
-	if($settings->sns_arn != $_POST['folder_watch']) {
+	if($settings->folder_watch != $_POST['folder_watch']) {
 		$vts = Input::get('folder_watch');
 		$fields=array('folder_watch'=>$vts);
 		$db->update('settings',1,$fields);
 	}
 
 
+	if($settings->folder_watch_filter_rgx != $_POST['folder_watch_filter_rgx']) {
+		$vts = $_POST['folder_watch_filter_rgx'];
+		$fields=array('folder_watch_filter_rgx'=>$vts);
+		$db->update('settings',1,$fields);
+	}
+
+	if($settings->folder_watch_group_rgx != $_POST['folder_watch_group_rgx']) {
+		$vts = $_POST['folder_watch_group_rgx'];
+		$fields=array('folder_watch_group_rgx'=>$vts);
+		$db->update('settings',1,$fields);
+	}
+
+	if($settings->folder_watch_side_a_match != $_POST['folder_watch_side_a_match']) {
+		$vts = $_POST['folder_watch_side_a_match'];
+		$fields=array('folder_watch_side_a_match'=>$vts);
+		$db->update('settings',1,$fields);
+	}
 
 	Redirect::to('admin.php');
 }
@@ -359,6 +376,26 @@ if(file_exists($abs_us_root.$us_url_root.'usersc/includes/admin_panels.php')){
 			<label for="folder_watch">Folder Watch <span style="font-size: smaller"> Scan Folder keeps track of files added here (non recursive)</span> </label>
 			<input type="text" class="form-control" name="folder_watch" id="folder_watch" value="<?=$settings->folder_watch?>">
 		</div>
+
+		<!--  folder_watch_filter_rgx -->
+		<div class="form-group">
+			<label for="folder_watch_filter_rgx">Folder Watch Filters <span style="font-size: smaller"> Only scan files if the names match this</span>  </label>
+			<input type="text" class="form-control" name="folder_watch_filter_rgx" id="folder_watch_filter_rgx" value="<?=$settings->folder_watch_filter_rgx?>">
+		</div>
+
+		<!--  folder_watch_group_rgx -->
+		<div class="form-group">
+			<label for="folder_watch_group_rgx">Folder Watch Groups <span style="font-size: smaller"> Gets names and sides using RegEx, group names must be common and side</span>  </label>
+			<input type="text" class="form-control" name="folder_watch_group_rgx" id="folder_watch_group_rgx" value="<?=$settings->folder_watch_group_rgx?>">
+		</div>
+
+		<!-- folder_watch_side_a_match -->
+		<div class="form-group">
+			<label for="folder_watch_side_a_match">Folder Watch Match Side A <span style="font-size: smaller"> When the side equals this , it must be side a</span>  </label>
+			<input type="text" class="form-control" name="folder_watch_side_a_match" id="folder_watch_side_a_match" value="<?=$settings->folder_watch_side_a_match?>">
+		</div>
+
+
 
 
 
