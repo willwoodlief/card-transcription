@@ -164,6 +164,14 @@ if(!empty($_POST['settings'])){
 		$db->update('settings',1,$fields);
 	}
 
+	if($settings->user_profile_config != $_POST['user_profile_config']) {
+		$vts = $_POST['user_profile_config'];
+		$fields=array('user_profile_config'=>$vts);
+		$db->update('settings',1,$fields);
+	}
+
+
+
 	Redirect::to('admin.php');
 }
 
@@ -394,6 +402,14 @@ if(file_exists($abs_us_root.$us_url_root.'usersc/includes/admin_panels.php')){
 			<label for="folder_watch_side_a_match">Folder Watch Match Side A <span style="font-size: smaller"> When the side equals this , it must be side a</span>  </label>
 			<input type="text" class="form-control" name="folder_watch_side_a_match" id="folder_watch_side_a_match" value="<?=$settings->folder_watch_side_a_match?>">
 		</div>
+
+		<!-- user_profile_config -->
+		<div class="form-group">
+			<label for="user_profile_config">User/Profile Config Location<span style="font-size: smaller"> Full File Path to yml folder</span>  </label>
+			<input type="text" class="form-control" name="user_profile_config" id="user_profile_config" value="<?=$settings->user_profile_config?>">
+		</div>
+
+
 
 
 

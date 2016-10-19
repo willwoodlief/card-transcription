@@ -1,3 +1,6 @@
+this project was started with user spice, which is the users, and usersc folder
+the user spice was modified to run with a private init
+
 <p>Licenses for other included software are located in the /users/licenses folder. By using this software you are agreeing to all included licenses. </p>
 
 <h3 style="text-align: center;">GNU GENERAL PUBLIC LICENSE</h3>

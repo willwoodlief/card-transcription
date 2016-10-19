@@ -1,0 +1,17 @@
+
+
+
+To add to the database:
+http://docs.phinx.org/en/latest/commands.html#the-migrate-command
+some systems you might have to put a php in front of the command (php bin/phinx.phar )
+   bin/phinx.phar migrate -e dev  ( -e production)  need to have production env settings set
+
+To Undo something on the database
+http://docs.phinx.org/en/latest/commands.html#the-rollback-command
+   bin/phinx.phar rollback -e dev
+
+
+
+To Create new migration
+http://docs.phinx.org/en/latest/commands.html#the-create-command
+   bin/phinx.phar create MigrationName

@@ -1,4 +1,5 @@
 <?php
+# this is for running the phinx library found in bin/ it uses the settings in privite_init
 $real =   realpath( dirname( __FILE__ ) );
 require_once $real.'/users/private_init.php';
 

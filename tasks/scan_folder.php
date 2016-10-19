@@ -9,6 +9,8 @@ require_once $localroot.'/../users/init.cli.php';
 
 require_once $localroot.'/../lib/file_watching.php';
 require_once $localroot.'/../pages/helpers/pages_helper.php';
+require_once $localroot.'/../lib/watching_configs.php';
+
 
 
 
@@ -23,7 +25,8 @@ $group_rules = $settings->folder_watch_group_rgx;
 $side_a = $settings->folder_watch_side_a_match;
 
 
-
+$wconfigs = new WatchingConfigs($settings->user_profile_config);
+$configs = $wconfigs->get_configs();
 $watcher = new FileWatching($folder_to_watch,$filter_rule,$group_rules,$side_a);
 
 $watcher->iterate_pairs('pass_along_pairs');

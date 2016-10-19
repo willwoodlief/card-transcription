@@ -3,7 +3,10 @@ $isRunningFromBrowser = !isset($GLOBALS['argv']);
 if ($isRunningFromBrowser) {
     die('Cannot run this particular script from the web');
 }
-require_once 'users/private_init.php';
+
+$localroot =   realpath( dirname( __FILE__ ) );
+
+require_once $localroot.'/../users/private_init.php';
 
 // Set config
 $GLOBALS['config'] = array(
@@ -25,11 +28,11 @@ $GLOBALS['config'] = array(
 );
 
 
-require_once 'users/classes/Config.php';
-require_once 'users/classes/DB.php';
-require_once 'lib/aws/aws-autoloader.php';
-require_once 'pages/helpers/pages_helper.php';
-require_once 'pages/helpers/mime_type.php';
+require_once $localroot.'/../users/classes/Config.php';
+require_once $localroot.'/../users/classes/DB.php';
+require_once $localroot.'/../lib/aws/aws-autoloader.php';
+require_once $localroot.'/../pages/helpers/pages_helper.php';
+require_once $localroot.'/../pages/helpers/mime_type.php';
 
 $db = DB::getInstance();
 $settingsQ = $db->query("Select * FROM settings");

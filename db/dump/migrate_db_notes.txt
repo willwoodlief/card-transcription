@@ -1,0 +1,6 @@
+to start with a completely new install
+1) import the database db/dump/original_database.sql.zip
+2) do the following sql command:
+ALTER TABLE `ht_jobs` ADD `company` VARCHAR( 255 ) NULL DEFAULT NULL AFTER `website` ;
+
+3) run bin/phinx.phar migrate -e dev
