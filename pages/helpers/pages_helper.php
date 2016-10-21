@@ -3,6 +3,8 @@
 $real =   realpath( dirname( __FILE__ ) );
 require_once $real.'/../../lib/ForceUTF8/Encoding.php';
 require_once $real.'/../../lib/aws/aws-autoloader.php';
+require_once $real.'/../../pages/helpers/mime_type.php';
+require_once $real.'/../../lib/SimpleImage/src/abeautifulsite/SimpleImage.php';
 
 
 function publish_to_sns($title,$message) {
@@ -55,9 +57,9 @@ function to_utf8($what) {
     return ForceUTF8\Encoding::toUTF8($what);
 }
 
-function upload_local_storage($idOnly=null) {
+function upload_local_storage($idOnly=null,$b_print=true) {
 
-
+    $ret = [];
     $db = DB::getInstance();
     $settingsQ = $db->query("Select * FROM settings");
     $settings = $settingsQ->first();
@@ -91,18 +93,30 @@ function upload_local_storage($idOnly=null) {
         foreach ($results as $rec) {
             if (!test_site_connection($settings->website_url)) {return;}
 
-            print "Uploading record id ".$rec->id . ' [Client ID '.$rec->client_id.'] ' . ' [Profile ID '.$rec->profile_id.'] ' . "\n";
-            $whatans = upload_from_waiting_row($rec,$settings->s3_bucket_name,$s3Client,$settings->website_url);
-            if ($whatans !== true) {
-                print '[Error] '. $whatans  . "\n";
-            } else {
-                print '[OK]'. "\n";
+            if ($b_print) {
+                print "Uploading record id " . $rec->id . ' [Client ID ' . $rec->client_id . '] ' . ' [Profile ID ' . $rec->profile_id . '] ' . "\n";
             }
+
+            $whatans = upload_from_waiting_row($rec,$settings->s3_bucket_name,$s3Client,$settings->website_url);
+            if ($b_print) {
+                if ($whatans !== true) {
+                    print '[Error] ' . $whatans . "\n";
+                } else {
+                    print '[OK]' . "\n";
+                }
+            }
+
+            if ($whatans !== true) {
+                $node = ['status'=>'error','message'=>to_utf8($whatans)] ;
+            } else {
+                $node = ['status'=>'ok','message'=>to_utf8('ok')] ;
+            }
+            array_push($ret,$node);
         }
 
     }
 
-    return true;
+    return $ret;
 
 }
 
@@ -504,8 +518,69 @@ function restart_edit($jobid,$side) {
 
 }
 
+function add_waiting_from_bucket($client_id,$profile_id,$key_image_front,$key_image_back,
+                                 $front_img_type,$back_img_type,$user,$bucket,$uploader_string) {
+    //do download to temp file for each side then pass to add_waiting
+    //  'SaveAs' => $filepath
+    try {
+
+    // Create an SDK class used to share configuration across clients.
+    // api key and secret are in environmental variables
+        $sharedConfig = [
+            'region' => getenv('AWS_REGION'),
+            'version' => 'latest'
+        ];
+
+        $sdk = new Aws\Sdk($sharedConfig);
+
+    // Use an Aws\Sdk class to create the S3Client object.
+        $s3Client = $sdk->createS3();
+
+        try {
+            $tmpfname_a = tempnam("/tmp", "side_a");
+            $result = $s3Client->getObject(array(
+                'Bucket' => $bucket,
+                'Key' => $key_image_front,
+                'SaveAs' => $tmpfname_a
+            ));
+        } catch (S3Exception $e) {
+            publish_to_sns('could not get A image from bucket', 'page died at add_waiting_from_bucket because
+         it could not get the image from the bucket. Error message was ' . $e->getMessage());
+            die('could not get  image from bucket: ' . $e->getMessage());
+        } finally {
+
+        }
+
+
+        try {
+            $tmpfname_b = tempnam("/tmp", "side_b");
+            $result = $s3Client->getObject(array(
+                'Bucket' => $bucket,
+                'Key' => $key_image_back,
+                'SaveAs' => $tmpfname_b
+            ));
+        } catch (S3Exception $e) {
+            publish_to_sns('could not get B image from bucket', 'page died at add_waiting_from_bucket because
+         it could not get the image from the bucket. Error message was ' . $e->getMessage());
+            die('could not get  image from bucket: ' . $e->getMessage());
+        } finally {
+
+        }
+
+        $tmp_file_path = realpath(__DIR__ . '/../tmp/local_uploads');
+
+        return add_waiting($client_id,$profile_id,$tmpfname_a,$tmpfname_b,
+            $front_img_type,$back_img_type,$user,$tmp_file_path,$uploader_string);
+
+    }  finally {
+        if (isset($tmpfname_a)) unlink($tmpfname_a);
+        if (isset($tmpfname_b)) unlink($tmpfname_b);
+
+    }
+}
+
 function add_waiting($client_id,$profile_id,$tmppath_image_front,$tmppath_image_back,
-                     $front_img_type,$back_img_type,$user,$upload_folder) {
+                     $front_img_type,$back_img_type,$user,$upload_folder,$uploader_string=null) {
 
     // $extension = strtolower(pathinfo('/home/will/Desktop/img0.png', PATHINFO_EXTENSION));
 
@@ -513,7 +588,7 @@ function add_waiting($client_id,$profile_id,$tmppath_image_front,$tmppath_image_
     $db = DB::getInstance();
     $fields=array(
         'user_id' => $user->data()->id,
-        'uploader_email' => $user->data()->email,
+        'uploader_email' => $uploader_string || $user->data()->email,
         'uploader_lname' => $user->data()->fname,
         'uploader_fname' => $user->data()->fname,
         'client_id'=> $client_id,
@@ -949,7 +1024,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
           
           j.fname, j.mname, j.lname, j.suffix, j.designations,
           j.address, j.city, j.state, j.zip, j.email, j.website, j.phone,
-          j.cell_phone, j.fax, j.skype,j.other_category, j.other_value,j.company,
+          j.cell_phone, j.fax, j.skype,j.other_category, j.other_value,j.company,j.phone_extension,
           utrans.id as utrans_id,utrans.email as utrans_email, utrans.fname as utrans_fname, utrans.lname as utrans_lname,
           uchecks.id as uchecks_id,uchecks.email as uchecks_email, uchecks.fname as uchecks_fname, uchecks.lname as uchecks_lname,
 
@@ -994,7 +1069,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
         $transcribe = [
             'fname' => $rec->fname, 'mname' => $rec->mname, 'lname' => $rec->lname, 'suffix' => $rec->suffix, 'designations' => $rec->designations,
             'address' => $rec->address, 'city' => $rec->city, 'state' => $rec->state, 'zip' => $rec->zip, 'email' => $rec->email,
-            'website' => $rec->website, 'phone' => $rec->phone,
+            'website' => $rec->website, 'phone' => $rec->phone,'phone_extension'=>$rec->phone_extension,
             'cell_phone' => $rec->cell_phone, 'fax' => $rec->fax, 'skype' => $rec->skype,'other_category'=> $rec->other_category,
             'other_value'=>$rec->other_value,'company'=>$rec->company
         ];

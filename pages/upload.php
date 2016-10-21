@@ -16,6 +16,7 @@ if ($settings->site_offline==1){die("The site is currently offline.");}?>
 $b_show_disconect_message = false;
 $validation = new Validate();
 $error_count = 0;
+$n_waiting_to_be_uploaded = 0;
 $nid = false;
 
 
@@ -70,10 +71,31 @@ if(!empty($_POST['uploads'])) {
 
 
 }
+
 ?>
 
 <div id="page-wrapper">
     <div class="row">
+        <?php if (
+                    ($n_waiting_to_be_uploaded > 0)
+                    &&
+                    (test_site_connection($settings->website_url))
+                    &&
+                    ($user->roles() && in_array("Administrator", $user->roles())) )
+        { ?>
+        <div class="col-sm-offset-2 col-sm-4 " >
+            <button type="button" class="btn btn-info" id='upload-now-button' onclick="upload_now();">
+                <span class="glyphicon glyphicon-upload"></span>
+                Upload <?= $n_waiting_to_be_uploaded ?> Jobs Now
+            </button>
+
+            <div id="upload-status"></div>
+         </div>
+        <div class="col-sm-2 " >
+            <div style="display: inline-block" id="waiting-for-uploads"></div>
+        </div>
+
+        <?php } ?>
         <?php if ($b_show_disconect_message) { ?>
 
             <div class="col-sm-offset-2 col-sm-4 alert alert-info" >
@@ -146,5 +168,6 @@ if(!empty($_POST['uploads'])) {
 <?php require_once $abs_us_root.$us_url_root.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
 
 <!-- Place any per-page javascript here -->
+<script src="js/upload_functions.js"></script>
 
 <?php require_once $abs_us_root.$us_url_root.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>

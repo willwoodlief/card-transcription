@@ -46,27 +46,44 @@ class FileWatching
             $side_a = $goodies->side_a;
             $side_b = $goodies->side_b;
             $b_did_process = call_user_func($callback,$side_a,$side_b);
-            if ($b_did_process) {
+            if ($b_did_process === true || $b_did_process['ok'] == true) {
                 $goodies->b_did_process = true;
                 $goodies->json_result = json_encode($b_did_process);
-            } else {
+            } else if ($b_did_process === false || $b_did_process['ok'] == false) {
                 $goodies->b_did_process = false;
+                $goodies->json_result = json_encode($b_did_process);
             }
         }
 
         foreach ($things as $n => $goodies) {
-            if (!$goodies->b_did_process) continue;
-            $this->db->update('ht_file_watching',$goodies->id_side_a,[
-                'is_processed'=>1,
-                'is_processed_ts'=>time(),
-                'response_json'=>$goodies->json_result
-            ]) ;
+            if (!$goodies->b_did_process)  {
+                $this->db->update('ht_file_watching',$goodies->id_side_a,[
+                    'is_processed'=>0,
+                    'is_processed_ts'=>time(),
+                    'response_json'=>$goodies->json_result
+                ]) ;
 
-            $this->db->update('ht_file_watching',$goodies->id_side_b,[
-                'is_processed'=>1,
-                'is_processed_ts'=>time(),
-                'response_json'=>$goodies->json_result
-            ]) ;
+                $this->db->update('ht_file_watching',$goodies->id_side_b,[
+                    'is_processed'=>0,
+                    'is_processed_ts'=>time(),
+                    'response_json'=>$goodies->json_result
+                ]) ;
+            } else {
+                $this->db->update('ht_file_watching',$goodies->id_side_a,[
+                    'is_processed'=>1,
+                    'is_processed_ts'=>time(),
+                    'response_json'=>$goodies->json_result
+                ]) ;
+
+                $this->db->update('ht_file_watching',$goodies->id_side_b,[
+                    'is_processed'=>1,
+                    'is_processed_ts'=>time(),
+                    'response_json'=>$goodies->json_result
+                ]) ;
+            }
+
+
+
         }
 
     }
@@ -135,8 +152,8 @@ class FileWatching
     private function add_files_to_table() {
         foreach (new DirectoryIterator($this->folder_to_watch) as $fileInfo) {
             if($fileInfo->isDot()) continue;
-            echo $fileInfo->getMTime() ." -->";
-            echo $fileInfo->getPath(). '/'. $fileInfo->getFilename() . "\n";
+          //  echo $fileInfo->getMTime() ." -->";
+          //  echo $fileInfo->getPath(). '/'. $fileInfo->getFilename() . "\n";
             $ts = $fileInfo->getMTime();
             $name = $fileInfo->getFilename();
             $path = $fileInfo->getRealPath();

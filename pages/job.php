@@ -127,7 +127,8 @@ if(!empty($_POST['transcribe'])) {
     $fields_to_check = [
         'fname','mname','lname','suffix',
         'designations','address','city','state','zip',
-        'email','website','phone','cell_phone','fax','skype','other_category','other_value','company'];
+        'email','website','phone','phone_extension','cell_phone','fax',
+        'skype','other_category','other_value','company'];
 
     $fields = [];
 
@@ -327,6 +328,11 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                             </div>
 
                             <div class="form-group col-xs-1 input-job-group">
+                                <label for="phone_extension" class="input-job-label">Extension</label>
+                                <input type="text" class="form-control input-job-box" name="phone_extension" id="phone_extension" value="<?=$job->transcribe->phone_extension ?>">
+                            </div>
+
+                            <div class="form-group col-xs-1 input-job-group">
                                 <label for="cell_phone" class="input-job-label">Cell Phone</label>
                                 <input type="text" class="form-control input-job-box" name="cell_phone" id="cell_phone" value="<?=$job->transcribe->cell_phone ?>">
                             </div>
@@ -357,9 +363,9 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                                 <input type="text" class="form-control input-job-box" name="skype" id="skype" value="<?=$job->transcribe->skype ?>">
                             </div>
 
-                            <div class="form-group col-sm-2 input-job-group">
+                            <div class="form-group col-sm-1 input-job-group">
                                 <label for="" class="input-job-label"></label>
-                                <input class='btn btn-primary input-job-box' type='submit' name="transcribe" value='Save Transcription' />
+                                <input class='btn btn-primary input-job-box' type='submit' name="transcribe" value='Save!' />
                             </div>
 
                         </div> <!-- Third row -->
@@ -541,6 +547,9 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
 <script src="js/jquery.phoenix.js"></script>
 <script src="js/jobform.js"></script>
 <script src="../users/js/jquery.noty.packaged.min.js"></script>
+<script src="js/jquery.formatter.min.js"></script>
+<script src="js/phone_numbers.js"></script>
+
 
 <script>
     function reload_a() {

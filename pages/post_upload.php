@@ -37,14 +37,14 @@ $ret = $_POST;
 
 $db = DB::getInstance();
 $fields=array(
-     'client_id' => $_POST['client_id'],
-     'profile_id' => $_POST['profile_id'],
-     'uploaded_at' => $_POST['uploaded_at'],
+     'client_id' => Input::get('client_id'),
+     'profile_id' => Input::get('profile_id'),
+     'uploaded_at' => Input::get('uploaded_at'),
      'created_at' => time(),
      'modified_at' => time(),
-     'uploader_email' => $_POST['uploader_email'],
-     'uploader_lname' => $_POST['uploader_lname'],
-     'uploader_fname' => $_POST['uploader_fname']
+     'uploader_email' => Input::get('uploader_email'),
+     'uploader_lname' => Input::get('uploader_lname'),
+     'uploader_fname' => Input::get('uploader_fname')
 
 );
 $what = $db->insert('ht_jobs',$fields);
@@ -67,33 +67,33 @@ $s3Client = $sdk->createS3();
 
 # get our bucket for this server (maybe same or different)
 $our_bucket = $settings->s3_bucket_name;
-$their_bucket = $_POST['bucket'];
+$their_bucket = Input::get('bucket');
 
-$front_key_name = $_POST['front'];
-$front_type = $_POST['front_type'];
-$front_width = $_POST['front_width'];
-$front_height = $_POST['front_height'];
+$front_key_name = Input::get('front');
+$front_type = Input::get('front_type');
+$front_width = Input::get('front_width');
+$front_height = Input::get('front_height');
 
-$back_key_name = $_POST['back'];
-$back_type = $_POST['back_type'];
-$back_width = $_POST['back_width'];
-$back_height = $_POST['back_height'];
+$back_key_name = Input::get('back');
+$back_type = Input::get('back_type');
+$back_width = Input::get('back_width');
+$back_height = Input::get('back_height');
 
 
-$efront_key_name = $_POST['efront'];
-$efront_type = $_POST['efront_type'];
-$efront_width = $_POST['efront_width'];
-$efront_height = $_POST['efront_height'];
+$efront_key_name = Input::get('efront');
+$efront_type = Input::get('efront_type');
+$efront_width = Input::get('efront_width');
+$efront_height = Input::get('efront_height');
 
-$eback_key_name = $_POST['eback'];
-$eback_type = $_POST['eback_type'];
-$eback_width = $_POST['eback_width'];
-$eback_height = $_POST['eback_height'];
+$eback_key_name = Input::get('eback');
+$eback_type = Input::get('eback_type');
+$eback_width = Input::get('eback_width');
+$eback_height = Input::get('eback_height');
 
-$updatetime =  $_POST['uploaded_at'];
+$updatetime =  Input::get('uploaded_at');
 $uploaded_date_string = date('Ymd',$updatetime);
-$clientID = $_POST['client_id'];
-$profileID = $_POST['profile_id'];
+$clientID = Input::get('client_id');
+$profileID = Input::get('profile_id');
 //img1234567a_id0268_p02_YYYYMMDD.jpg
 $new_front_key_name = "img{$jobid}a_id{$clientID}_p{$profileID}_{$uploaded_date_string}.{$front_type}";
 $new_back_key_name = "img{$jobid}b_id{$clientID}_p{$profileID}_{$uploaded_date_string}.{$back_type}";
