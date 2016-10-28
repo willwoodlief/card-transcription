@@ -309,7 +309,9 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
          'uploader_email' => $row->uploader_email,
          'uploader_lname' => $row->uploader_lname,
          'uploader_fname' => $row->uploader_fname,
-         'uploaded_at'  => $row->created_at
+         'uploaded_at'  => $row->created_at,
+         'notes' => $row->notes,
+         'tags' =>json_decode($row->tags_json,true)
         ];
      $what = rest_helper($url_to_use, $params = $msg, $verb = 'POST', $format = 'json');
      if ($what->status == 'ok') {
@@ -519,7 +521,8 @@ function restart_edit($jobid,$side) {
 }
 
 function add_waiting_from_bucket($client_id,$profile_id,$key_image_front,$key_image_back,
-                                 $front_img_type,$back_img_type,$user,$bucket,$uploader_string) {
+                                 $front_img_type,$back_img_type,$user,$bucket,
+                                 $uploader_string,$tags=[],$notes='') {
     //do download to temp file for each side then pass to add_waiting
     //  'SaveAs' => $filepath
     try {
@@ -570,7 +573,8 @@ function add_waiting_from_bucket($client_id,$profile_id,$key_image_front,$key_im
         $tmp_file_path = realpath(__DIR__ . '/../tmp/local_uploads');
 
         return add_waiting($client_id,$profile_id,$tmpfname_a,$tmpfname_b,
-            $front_img_type,$back_img_type,$user,$tmp_file_path,$uploader_string);
+            $front_img_type,$back_img_type,$user,$tmp_file_path,
+            $uploader_string,$tags,$notes);
 
     }  finally {
         if (isset($tmpfname_a)) unlink($tmpfname_a);
@@ -580,7 +584,8 @@ function add_waiting_from_bucket($client_id,$profile_id,$key_image_front,$key_im
 }
 
 function add_waiting($client_id,$profile_id,$tmppath_image_front,$tmppath_image_back,
-                     $front_img_type,$back_img_type,$user,$upload_folder,$uploader_string=null) {
+                     $front_img_type,$back_img_type,$user,$upload_folder,
+                     $uploader_string=null,$tags=[],$notes='') {
 
     // $extension = strtolower(pathinfo('/home/will/Desktop/img0.png', PATHINFO_EXTENSION));
 
@@ -593,6 +598,8 @@ function add_waiting($client_id,$profile_id,$tmppath_image_front,$tmppath_image_
         'uploader_fname' => $user->data()->fname,
         'client_id'=> $client_id,
         'profile_id'=> $profile_id,
+        'tags_json' => json_encode($tags),
+        'notes' => $notes,
         'created_at'=> time()
     );
     $db->insert('ht_waiting',$fields);
@@ -1204,4 +1211,8 @@ function _pages_isLocalHost() {
 
     return false;
 
+}
+
+function add_tags_to_job($tags) {
+    //this is array of tags now, but don't know if the tags have values or not
 }

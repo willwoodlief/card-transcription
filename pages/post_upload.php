@@ -44,7 +44,8 @@ $fields=array(
      'modified_at' => time(),
      'uploader_email' => Input::get('uploader_email'),
      'uploader_lname' => Input::get('uploader_lname'),
-     'uploader_fname' => Input::get('uploader_fname')
+     'uploader_fname' => Input::get('uploader_fname'),
+     'notes' => Input::get('notes')
 
 );
 $what = $db->insert('ht_jobs',$fields);
@@ -298,5 +299,9 @@ if (!$what) {
     printErrorJSONAndDie('could not toggle initialized flag for jobs: '. $db->error());
 }
 
+//add in tags
+
 $ret['message']= "started job {$jobid}";
+$tags = json_decode(Input::get('tags'),true);
+add_tags_to_job($tags);
 printOkJSONAndDie($ret);

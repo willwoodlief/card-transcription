@@ -24,12 +24,14 @@ $bucket = $job->bucket;
 $side_a_key = $job->side_a_key;
 $side_b_key = $job->side_b_key;
 $uploader = $job->uploader;
+$notes = $job->notes;
+$tags = $job->tags;
 $ext_a = substr(strrchr($side_a_key,'.'),1);
 $ext_b = substr(strrchr($side_b_key,'.'),1);
 $this_user = new User('admin');
 
 $nid = add_waiting_from_bucket($client_id,$profile_id,$side_a_key,$side_b_key,
-    $ext_a,$ext_b,$this_user,$bucket,$uploader);
+    $ext_a,$ext_b,$this_user,$bucket,$uploader,$tags,$notes);
 
 upload_local_storage($nid);
 
