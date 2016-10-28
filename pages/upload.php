@@ -61,7 +61,8 @@ if(!empty($_POST['uploads'])) {
         try {
             $tmp_file_path = $abs_us_root . $us_url_root . 'tmp/local_uploads';
             $nid = add_waiting($client_id, $profile_id, $front_image_file, $back_image_file, $front_extension, $back_extension, $user, $tmp_file_path);
-            $b_show_disconect_message = !upload_local_storage($nid);
+            $upload_try_check = !upload_local_storage($nid);
+            $b_show_disconect_message = !$upload_try_check;
             $n_waiting_to_be_uploaded = $db->query("SELECT * FROM ht_waiting p WHERE p.is_uploaded = 0 AND upload_result IS NULL ORDER BY p.created_at;", [])->count();
         } catch (Exception $e) {
             $validation->addError($e->getMessage());
