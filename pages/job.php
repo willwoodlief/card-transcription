@@ -126,9 +126,9 @@ if(!empty($_POST['transcribe'])) {
     }
     $fields_to_check = [
         'fname','mname','lname','suffix',
-        'designations','address','city','state','zip',
-        'email','website','phone','phone_extension','cell_phone','fax',
-        'skype','other_category','other_value','company'];
+        'title','address','city','state','zip',
+        'email','website','work_phone','work_phone_extension','cell_phone','fax',
+        'skype','company','country','twitter','home_phone','other_phone','notes'];
 
     $fields = [];
 
@@ -141,6 +141,8 @@ if(!empty($_POST['transcribe'])) {
     }
 
 
+
+
    // print_nice($fields);
    // print_nice($_REQUEST);
     $fields['modified_at'] = time();
@@ -148,6 +150,13 @@ if(!empty($_POST['transcribe'])) {
     if (!$what) {
 
         $validation->addError($db->error());
+        $error_count ++;
+    }
+
+    $tag_string = to_utf8(Input::get('tag_string'));
+    $error = save_tag_string($jobid,$tag_string);
+    if ($error) {
+        $validation->addError($error);
         $error_count ++;
     }
 
@@ -283,14 +292,11 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                                 <input type="text" class="form-control input-job-box" name="suffix" id="suffix" value="<?=$job->transcribe->suffix ?>">
                             </div>
 
-                            <div class="form-group col-xs-1 input-job-group">
-                                <label for="other_category" class="input-job-label">Title</label>
-                                <input type="text" class="form-control input-job-box" name="other_category" id="other_category" value="<?=$job->transcribe->other_category ?>">
-                            </div>
+
 
                             <div class="form-group col-xs-1 input-job-group">
-                                <label for="designations" class="input-job-label">Designations</label>
-                                <input type="text" class="form-control input-job-box" name="designations" id="designations" value="<?=$job->transcribe->designations ?>">
+                                <label for="title" class="input-job-label">Title</label>
+                                <input type="text" class="form-control input-job-box" name="title" id="title" value="<?=$job->transcribe->title ?>">
                             </div>
 
                             <!-- this field can be used later for additional stuff with title, originated when spec was a little different and no need to take it out -->
@@ -316,6 +322,11 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                                 <input type="text" class="form-control input-job-box" name="state" id="state" value="<?=$job->transcribe->state ?>">
                             </div>
 
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="country" class="input-job-label">Country</label>
+                                <input type="text" class="form-control input-job-box" name="country" id="country" value="<?=$job->transcribe->country ?>">
+                            </div>
+
                         </div>
 
 
@@ -323,18 +334,28 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
 
 
                             <div class="form-group col-xs-1 input-job-group">
-                                <label for="phone" class="input-job-label">Phone</label>
-                                <input type="text" class="form-control input-job-box" name="phone" id="phone" value="<?=$job->transcribe->phone ?>">
+                                <label for="work_phone" class="input-job-label">Work Phone</label>
+                                <input type="text" class="form-control input-job-box" name="work_phone" id="work_phone" value="<?=$job->transcribe->work_phone ?>">
                             </div>
 
                             <div class="form-group col-xs-1 input-job-group">
-                                <label for="phone_extension" class="input-job-label">Extension</label>
-                                <input type="text" class="form-control input-job-box" name="phone_extension" id="phone_extension" value="<?=$job->transcribe->phone_extension ?>">
+                                <label for="work_phone_extension" class="input-job-label">Extension</label>
+                                <input type="text" class="form-control input-job-box" name="work_phone_extension" id="work_phone_extension" value="<?=$job->transcribe->work_phone_extension ?>">
                             </div>
 
                             <div class="form-group col-xs-1 input-job-group">
                                 <label for="cell_phone" class="input-job-label">Cell Phone</label>
                                 <input type="text" class="form-control input-job-box" name="cell_phone" id="cell_phone" value="<?=$job->transcribe->cell_phone ?>">
+                            </div>
+
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="home_phone" class="input-job-label">Home Phone</label>
+                                <input type="text" class="form-control input-job-box" name="home_phone" id="home_phone" value="<?=$job->transcribe->home_phone ?>">
+                            </div>
+
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="other_phone" class="input-job-label">Other Phone</label>
+                                <input type="text" class="form-control input-job-box" name="other_phone" id="other_phone" value="<?=$job->transcribe->other_phone ?>">
                             </div>
 
                             <div class="form-group col-xs-1 input-job-group">
@@ -363,6 +384,21 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                                 <input type="text" class="form-control input-job-box" name="skype" id="skype" value="<?=$job->transcribe->skype ?>">
                             </div>
 
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="twitter" class="input-job-label">Twitter</label>
+                                <input type="text" class="form-control input-job-box" name="twitter" id="twitter" value="<?=$job->transcribe->twitter ?>">
+                            </div>
+
+                            <div class="form-group col-xs-5 input-job-group">
+                                <label for="notes" class="input-job-label">Notes</label>
+                                <input type="text" class="form-control input-job-box" name="notes" id="notes" value="<?=$job->transcribe->notes ?>">
+                            </div>
+
+                            <div class="form-group col-xs-2 input-job-group">
+                                <label for="tag_string" class="input-job-label">Tags (comma seperated)</label>
+                                <input type="text" class="form-control input-job-box" name="tag_string" id="tag_string" value="<?=$job->transcribe->tag_string ?>">
+                            </div>
+
                             <div class="form-group col-sm-1 input-job-group">
                                 <label for="" class="input-job-label"></label>
                                 <input class='btn btn-primary input-job-box' type='submit' name="transcribe" value='Save!' />
@@ -371,12 +407,6 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                         </div> <!-- Third row -->
 
                         <div class="col-xs-12" style="">
-
-
-
-
-
-
 
                         </div> <!-- Fourth row -->
 

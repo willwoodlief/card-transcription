@@ -1029,9 +1029,10 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
           j.uploader_email, j.uploader_lname,
           j.uploader_fname, 
           
-          j.fname, j.mname, j.lname, j.suffix, j.designations,
-          j.address, j.city, j.state, j.zip, j.email, j.website, j.phone,
-          j.cell_phone, j.fax, j.skype,j.other_category, j.other_value,j.company,j.phone_extension,
+          j.fname, j.mname, j.lname, j.suffix, j.title,
+          j.address, j.city, j.state, j.zip, j.email, j.website, j.work_phone,
+          j.cell_phone, j.fax, j.skype, j.company,j.work_phone_extension,
+          j.country,j.twitter,j.home_phone,j.other_phone,j.notes,
           utrans.id as utrans_id,utrans.email as utrans_email, utrans.fname as utrans_fname, utrans.lname as utrans_lname,
           uchecks.id as uchecks_id,uchecks.email as uchecks_email, uchecks.fname as uchecks_fname, uchecks.lname as uchecks_lname,
 
@@ -1042,6 +1043,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
           edit_side_a.id as edit_side_a_id,edit_side_a.image_url as edit_side_a_url , edit_side_a.image_height  as edit_side_a_height, edit_side_a.image_width as edit_side_a_width,
 
           edit_side_b.id as edit_side_b_id,edit_side_b.image_url as edit_side_b_url , edit_side_b.image_height  as edit_side_b_height, edit_side_b.image_width as edit_side_b_width
+          
 
         from ht_jobs j
           left join users utrans ON utrans.id = j.transcriber_user_id
@@ -1074,11 +1076,13 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
         ];
         
         $transcribe = [
-            'fname' => $rec->fname, 'mname' => $rec->mname, 'lname' => $rec->lname, 'suffix' => $rec->suffix, 'designations' => $rec->designations,
+            'fname' => $rec->fname, 'mname' => $rec->mname, 'lname' => $rec->lname, 'suffix' => $rec->suffix, 'title' => $rec->title,
             'address' => $rec->address, 'city' => $rec->city, 'state' => $rec->state, 'zip' => $rec->zip, 'email' => $rec->email,
-            'website' => $rec->website, 'phone' => $rec->phone,'phone_extension'=>$rec->phone_extension,
-            'cell_phone' => $rec->cell_phone, 'fax' => $rec->fax, 'skype' => $rec->skype,'other_category'=> $rec->other_category,
-            'other_value'=>$rec->other_value,'company'=>$rec->company
+            'website' => $rec->website, 'work_phone' => $rec->work_phone,'work_phone_extension'=>$rec->work_phone_extension,
+            'cell_phone' => $rec->cell_phone, 'fax' => $rec->fax, 'skype' => $rec->skype,
+            'company'=>$rec->company,
+            'country'=>$rec->country,'twitter'=>$rec->twitter,'home_phone'=>$rec->home_phone,'other_phone'=>$rec->other_phone,
+            'notes' => $rec->notes
         ];
         
         $translater = [
@@ -1124,8 +1128,148 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
         
     }
 
+    # don't want the complciations of nested queries, so add tag information now
+    $job_id_array = [];
+    for($i=0; $i < sizeof($ret); $i++) {
+        $node = $ret[$i];
+        $id = $node['job']['id'];
+        array_push($job_id_array, $id);
+
+    }
+    $tags = get_tags_for_jobs($job_id_array);
+    for($i=0; $i < sizeof($ret); $i++) {
+        $node = $ret[$i];
+        $id = $node['job']['id'];
+        if (array_key_exists($id,$tags)) {
+            $ret[$i]['tags'] = $tags[$id];
+            $ret[$i]['transcribe']['tag_string'] = generate_tag_string_from_job($ret[$i]);
+        } else {
+            $ret[$i]['tags'] = array();
+            $ret[$i]['transcribe']['tag_string'] = '';
+        }
+
+    }
+
+
     return $ret;
 
+
+}
+
+function save_tag_string($job_id,$tag_string) {
+    #split tag string by commas
+    if (!$tag_string) {return false;}
+    $tags = explode(',',$tag_string);
+    if (!$tags) {return false;}
+
+    #delete existing tags for this job
+    $db = DB::getInstance();
+
+    $db->query("DELETE FROM ht_tag_jobs WHERE ht_job_id = $job_id");
+    for($i=0; $i < sizeof($tags); $i++) {
+        $parts = explode('=',$tags[$i]);
+        $tag_value = null;
+        if (sizeof($parts) > 1) {
+            $tag_value = trim($parts[1]);
+        }
+        $tag_name = trim($parts[0]);
+        if ($tag_name) {
+            insert_tag_to_job($job_id,$tag_name,$tag_value);
+        }
+
+    }
+
+
+
+    return false;
+
+
+}
+
+function  add_tag_name($tag_name) {
+        // adds tag name if does not exist
+    $db = DB::getInstance();
+    $query = $db->query( "select id from ht_tags where tag_name = ?;",[$tag_name]);
+    if ($query->count() > 0) {return $query->first()->id;}
+    $db->query( "INSERT INTO ht_tags(tag_name,created_at_ts) VALUES (?,UNIX_TIMESTAMP())",[$tag_name]);
+    return $db->lastId();
+}
+
+function insert_tag_to_job($job_id,$tag_name,$tag_value) {
+    #gets the tag id and then inserts into ht_tag_jobs
+
+    #get the tag id
+    $db = DB::getInstance();
+    $tag_id = add_tag_name($tag_name);
+    $db->query( "INSERT INTO ht_tag_jobs(ht_tag_id,ht_job_id,tag_value) VALUES (?,?,?)",[$tag_id,$job_id,$tag_value]);
+
+}
+
+#tags is array of just names, or is array of objects (tag_id,tag_name,tag_value)
+#this converts these to a tag string and then calls save_tag_string($job_id,$tag_string)
+function add_tags_to_job($jobid,$tags) {
+    //this is array of tags now, but don't know if the tags have values or not
+    $tag_string = generate_tag_string($tags);
+    save_tag_string($jobid,$tag_string);
+}
+
+function generate_tag_string_from_job($job) {
+    $tags = $job['tags'];
+    return generate_tag_string($tags);
+}
+
+function generate_tag_string($tag_array) {
+    $tags = $tag_array;
+    if (!$tags) {return '';}
+    $string_array = [];
+    for($i=0; $i < sizeof($tags); $i++) {
+        $string = tag_string_from_node_or_name($tags[$i]);
+        array_push($string_array,$string);
+    }
+    return implode(',',$string_array);
+}
+
+
+
+function tag_string_from_node_or_name($node) {
+    //if is only string return the string
+    if (is_string($node)) { return trim($node);}
+    $tag_name = trim($node['tag_name']);
+    $tag_value = isset($node['tag_value']) && $node['tag_value'] ? trim($node['tag_value']): '';
+    if ($tag_value) {
+        $string = "$tag_name=$tag_value";
+    } else {
+        $string = "$tag_name";
+    }
+    return $string;
+}
+
+function get_tags_for_jobs($job_id_array) {
+    if (sizeof($job_id_array) == 0) return array();
+    $db = DB::getInstance();
+    $id_string = implode(',',$job_id_array);
+    $query = $db->query( "
+        select ht_tag_jobs.ht_job_id as job_id,ht_tags.id as tag_id,tag_name,tag_value
+            from ht_tag_jobs
+              INNER JOIN ht_tags ON ht_tags.id = ht_tag_jobs.ht_tag_id
+            where ht_tag_jobs.ht_job_id in ($id_string)
+            ORDER BY ht_tag_jobs.ht_job_id,ht_tags.id
+    ");
+    $results = $query->results();
+    $ret = [];
+    foreach ($results as $rec) {
+       if (!array_key_exists($rec->job_id,$ret)) {
+           $ret[$rec->job_id] = [];
+       }
+        $node = [
+          'tag_id' => $rec->tag_id,
+          'tag_name' => $rec->tag_name,
+          'tag_value' => $rec->tag_value
+        ];
+        array_push($ret[$rec->job_id],$node);
+    }
+
+    return $ret;
 
 }
 
@@ -1213,6 +1357,3 @@ function _pages_isLocalHost() {
 
 }
 
-function add_tags_to_job($tags) {
-    //this is array of tags now, but don't know if the tags have values or not
-}
