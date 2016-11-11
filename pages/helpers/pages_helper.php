@@ -801,9 +801,15 @@ function get_curl_resp_code($url) {
 }
 
 //this allows us to post stuff without relying on curl, which some php environments do not have configured
-function rest_helper($url, $params = null, $verb = 'GET', $format = 'json',$build_query = true)
+function rest_helper($url, $params = null, $verb = 'GET', $format = 'json',$build_query = true,$gdebug=false)
 {
     $ch = curl_init();
+    $verbose = null;
+    if ($gdebug) {
+        $verbose = fopen('php://temp', 'w+');
+        curl_setopt($ch, CURLOPT_STDERR, $verbose);
+        curl_setopt($ch, CURLOPT_VERBOSE, true);
+    }
 
     curl_setopt($ch, CURLOPT_URL,$url);
     curl_setopt($ch, CURLOPT_POST, 1);
@@ -827,6 +833,12 @@ function rest_helper($url, $params = null, $verb = 'GET', $format = 'json',$buil
     $httpcode = intval(curl_getinfo($ch, CURLINFO_HTTP_CODE));
     if ($httpcode == 0 || $httpcode >= 400) {
         throw new Exception("Could not send data, response was ".$httpcode);
+    }
+
+    if ($gdebug) {
+        rewind($verbose);
+        $verboseLog = stream_get_contents($verbose);
+        echo "Verbose information:\n<pre>", htmlspecialchars($verboseLog), "</pre>\n";
     }
     curl_close ($ch);
 

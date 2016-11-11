@@ -108,9 +108,9 @@ if(!empty($_POST['create_entry'])) {
     "client_id": "will",
     "profile_id": "w2",
     "uploader_email": "willwoodlief@gmail.com",
-    "bucket": "texdevelopers-local-ht",
-    "side_a_key": "img1a_idw_ps_20161004.jpg",
-    "side_b_key": "img1a_idwill_pdo_20161001.jpg",
+    "bucket": "enrich-scanner",
+    "side_a_key": "img1a_id1_p2_20161004.jpg",
+    "side_b_key": "img2a_id1_p1_20161005.jpg",
     "notes": "this is an example json used to send in the body of the sns, here is it filled with some data",
     "tags":[{"tag_name":"Place Uploaded","tag_value":"Scansville,NJ"},{"tag_name":"Test Data","tag_value":null},{"tag_name":"When-Uploaded","tag_value": "June 24,2017"}]
 }
