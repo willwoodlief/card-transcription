@@ -4,6 +4,9 @@ if ($isRunningFromBrowser) {
     die('Cannot run this particular script from the web');
 }
 $localroot =   realpath( dirname( __FILE__ ) );
+global $abs_us_root;
+$abs_us_root = $localroot;
+
 require_once $localroot.'/../users/private_init.php';
 require_once $localroot.'/../users/init.cli.php';
 

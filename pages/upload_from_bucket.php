@@ -10,33 +10,60 @@ require_once '../users/init.php';
 require_once $abs_us_root.$us_url_root.'/users/includes/header_json.php';
 require_once $abs_us_root.$us_url_root.'pages/helpers/pages_helper.php';
 
-if (!Input::exists('Message')) {
-    printErrorJSONAndDie('No Message');
+if (!Input::get('Message')) {
+    $getnice = $_POST;
+    if (!$getnice) {
+        $getnice = null;
+    }
+    $debug = array('message'=> 'Did not find the message param', 'get params' => $getnice);
+    printErrorJSONAndDie($debug);
 }
 
-$message = Input::get('Message');
-$job = json_decode($message);
+try {
+
+
+    if (isset($_POST["Message"])) {
+        $message = $_POST['Message'];
+    } elseif (isset($_GET["Message"])) {
+        $message = $_GET['Message'];
+    } else {
+        $message = null;
+    }
+
+    $job = null;
+    if ($message) {
+        $job = json_decode($message);
+    }
+
+    if (!$job) {
+        $err = ['json'=>$message, 'json_error'=>get_json_last_err_string()];
+        printErrorJSONAndDie($err);
+    }
+
 //we ignore subject
 
-$client_id = $job->client_id;
-$profile_id = $job->profile_id;
-$bucket = $job->bucket;
-$side_a_key = $job->side_a_key;
-$side_b_key = $job->side_b_key;
-$uploader = $job->uploader;
-$notes = $job->notes;
-$tags = $job->tags;
-$ext_a = substr(strrchr($side_a_key,'.'),1);
-$ext_b = substr(strrchr($side_b_key,'.'),1);
-$this_user = new User('admin');
+    $client_id = $job->client_id;
+    $profile_id = $job->profile_id;
+    $bucket = $job->bucket;
+    $side_a_key = $job->side_a_key;
+    $side_b_key = $job->side_b_key;
+    $uploader = $job->uploader_email;
+    $notes = $job->notes;
+    $tags = $job->tags;
+    $ext_a = substr(strrchr($side_a_key, '.'), 1);
+    $ext_b = substr(strrchr($side_b_key, '.'), 1);
+    $this_user = new User('admin');
 
-$nid = add_waiting_from_bucket($client_id,$profile_id,$side_a_key,$side_b_key,
-    $ext_a,$ext_b,$this_user,$bucket,$uploader,$tags,$notes);
+    $nid = add_waiting_from_bucket($client_id, $profile_id, $side_a_key, $side_b_key,
+        $ext_a, $ext_b, $this_user, $bucket, $uploader, $tags, $notes);
 
-upload_local_storage($nid);
+    upload_local_storage($nid);
 
 
-
-printOkJSONAndDie('images put into queue; nid is '.$nid);
+    printOkJSONAndDie('images put into queue; nid is ' . $nid);
+}
+catch(Exception $e) {
+    printErrorJSONAndDie('could not insert job: '. $e->getMessage() . "\n" . $e->getTraceAsString());
+}
 
 

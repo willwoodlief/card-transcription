@@ -523,6 +523,7 @@ function restart_edit($jobid,$side) {
 function add_waiting_from_bucket($client_id,$profile_id,$key_image_front,$key_image_back,
                                  $front_img_type,$back_img_type,$user,$bucket,
                                  $uploader_string,$tags=[],$notes='') {
+    global $abs_us_root,$us_url_root;
     //do download to temp file for each side then pass to add_waiting
     //  'SaveAs' => $filepath
     try {
@@ -570,7 +571,8 @@ function add_waiting_from_bucket($client_id,$profile_id,$key_image_front,$key_im
 
         }
 
-        $tmp_file_path = realpath(__DIR__ . '/../tmp/local_uploads');
+        $tmp_file_path = $abs_us_root  .$us_url_root . 'tmp/local_uploads';
+        //print "!the uploaded file folder is at $tmp_file_path";
 
         return add_waiting($client_id,$profile_id,$tmpfname_a,$tmpfname_b,
             $front_img_type,$back_img_type,$user,$tmp_file_path,
@@ -745,6 +747,32 @@ function getGUID(){
     }
 }
 
+function get_json_last_err_string() {
+    switch (json_last_error()) {
+        case JSON_ERROR_NONE:
+            return ' - No errors';
+            break;
+        case JSON_ERROR_DEPTH:
+            return ' - Maximum stack depth exceeded';
+            break;
+        case JSON_ERROR_STATE_MISMATCH:
+            return ' - Underflow or the modes mismatch';
+            break;
+        case JSON_ERROR_CTRL_CHAR:
+            return ' - Unexpected control character found';
+            break;
+        case JSON_ERROR_SYNTAX:
+            return ' - Syntax error, malformed JSON';
+            break;
+        case JSON_ERROR_UTF8:
+            return ' - Malformed UTF-8 characters, possibly incorrectly encoded';
+            break;
+        default:
+            return ' - Unknown error';
+            break;
+    }
+}
+
 //usual curl wrapper, returns the http code, if the system does not have curl set up to work use the rest helper below
 function get_curl_resp_code($url) {
 
@@ -773,13 +801,20 @@ function get_curl_resp_code($url) {
 }
 
 //this allows us to post stuff without relying on curl, which some php environments do not have configured
-function rest_helper($url, $params = null, $verb = 'GET', $format = 'json')
+function rest_helper($url, $params = null, $verb = 'GET', $format = 'json',$build_query = true)
 {
     $ch = curl_init();
 
     curl_setopt($ch, CURLOPT_URL,$url);
     curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
+    if ($build_query) {
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
+    } else {
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+    }
+
+
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 
     if (_pages_isLocalHost()) {
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -879,12 +914,12 @@ function print_nice($elem,$max_level=15,$print_nice_stack=array()){
         $color=0;
         foreach($elem as $k => $v){
             if($max_level%2){
-                $rgb=($color++%2)?"#888888":"#BBBBBB";
+                $rgb=($color++%2)?"#888888":"#44BBBB";
             }else{
-                $rgb=($color++%2)?"#8888BB":"#BBBBFF";
+                $rgb=($color++%2)?"#777777":"#22BBFF";
             }
             echo '<tr><td valign="top" style="width:40px;background-color:'.$rgb.';">';
-            echo '<strong>'.$k."</strong></td><td style='background-color:white;color:black'>";
+            echo '<strong style="color:black">'.$k."</strong></td><td style='background-color:white;color:black'>";
             print_nice($v,$max_level,$print_nice_stack);
             echo "</td></tr>";
         }
@@ -1208,6 +1243,7 @@ function insert_tag_to_job($job_id,$tag_name,$tag_value) {
 #tags is array of just names, or is array of objects (tag_id,tag_name,tag_value)
 #this converts these to a tag string and then calls save_tag_string($job_id,$tag_string)
 function add_tags_to_job($jobid,$tags) {
+    if ($tags == null) {return;}
     //this is array of tags now, but don't know if the tags have values or not
     $tag_string = generate_tag_string($tags);
     save_tag_string($jobid,$tag_string);

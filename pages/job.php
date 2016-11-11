@@ -394,7 +394,7 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                                 <input type="text" class="form-control input-job-box" name="notes" id="notes" value="<?=$job->transcribe->notes ?>">
                             </div>
 
-                            <div class="form-group col-xs-2 input-job-group">
+                            <div class="form-group col-xs-4 input-job-group">
                                 <label for="tag_string" class="input-job-label">Tags (comma seperated)</label>
                                 <input type="text" class="form-control input-job-box" name="tag_string" id="tag_string" value="<?=$job->transcribe->tag_string ?>">
                             </div>

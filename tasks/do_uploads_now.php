@@ -7,6 +7,8 @@ if ($isRunningFromBrowser) {
 $localroot =   realpath( dirname( __FILE__ ) );
 
 require_once $localroot.'/../users/private_init.php';
+global $abs_us_root;
+$abs_us_root = $localroot;
 
 // Set config
 $GLOBALS['config'] = array(

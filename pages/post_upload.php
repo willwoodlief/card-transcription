@@ -302,6 +302,13 @@ if (!$what) {
 //add in tags
 
 $ret['message']= "started job {$jobid}";
-$tags = json_decode(Input::get('tags'),true);
+if (isset($_POST['tags'])) {
+    $tags = $_POST['tags'];
+} elseif (isset($_GET['tags']) ) {
+    $tags = $_GET['tags'];
+} else {
+    $tags = null;
+}
+
 add_tags_to_job($jobid,$tags);
 printOkJSONAndDie($ret);

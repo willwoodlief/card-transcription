@@ -300,6 +300,13 @@ if(file_exists($abs_us_root.$us_url_root.'usersc/includes/admin_panels.php')){
 	</div>
 	</div><!--/panel-->
 
+		<div class="">
+			<div class="panel panel-default">
+				<div class="panel-heading"><strong>Test Json Input</strong> </div>
+				<div class="panel-body">
+					<a href="../pages/test_json_in.php">Goto Test Page</a> </div>
+			</div>
+
 	</div> <!-- /col -->
 
 	<div class="col-xs-12 col-md-6">
@@ -467,6 +474,8 @@ if(file_exists($abs_us_root.$us_url_root.'usersc/includes/admin_panels.php')){
 		<p><input class='btn btn-primary' type='submit' name="settings" value='Save Site Settings' /></p>
 		</form>
 	</div> <!-- /col1/2 -->
+
+
 
 	<div class="col-xs-12 col-md-6"><!-- CSS Settings Column -->
 		<form class="" action="admin.php" name="css" method="post">
