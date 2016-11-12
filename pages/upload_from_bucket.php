@@ -18,7 +18,7 @@ try {
     if (!Input::get('Message')) {
         $post_raw = file_get_contents('php://input');
         $post_prepped = to_utf8(trim($post_raw));
-        $post= json_decode($post_prepped);
+        $post= json_decode($post_prepped,true);
         if (!$post) {
             $what = get_json_last_err_string();
             $debug = array('message'=> 'Could not convert post to json',
