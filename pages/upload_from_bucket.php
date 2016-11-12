@@ -17,7 +17,18 @@ try {
     $post = null;
     if (!Input::get('Message')) {
         $post_raw = file_get_contents('php://input');
-        $post = to_utf8(trim($post_raw));
+        $post_prepped = to_utf8(trim($post_raw));
+        $post= json_decode($post_prepped);
+        if (!$post) {
+            $what = get_json_last_err_string();
+            $debug = array('message'=> 'Could not convert post to json',
+                'json error' => $what,
+                'json_attempted'=>$post_prepped   );
+            if ($screamer) {
+                publish_to_sns("Error Converting input to json", $debug);
+            }
+            printErrorJSONAndDie($debug);
+        }
     }  else {
         if (isset($_POST["Message"])) {
             $post = $_POST;
