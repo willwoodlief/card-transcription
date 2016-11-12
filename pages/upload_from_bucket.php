@@ -11,37 +11,39 @@ require_once $abs_us_root.$us_url_root.'/users/includes/header_json.php';
 require_once $abs_us_root.$us_url_root.'pages/helpers/pages_helper.php';
 $screamer = true;
 
-if ($screamer) {
-    $post = file_get_contents('php://input');
-    publish_to_sns("Post Dump of new->json", $post);
-}
-
-
-if (!Input::get('Message')) {
-    if (isset($_POST["Message"])) {
-        $message = $_POST['Message'];
-    } elseif (isset($_GET["Message"])) {
-        $message = $_GET['Message'];
-    } else {
-        $message = null;
-    }
-    $debug = array('message'=> 'Did not find the message param', 'get params' => $message);
-    if ($screamer) {
-
-        publish_to_sns("Post Dump of new->json", $debug);
-    }
-    printErrorJSONAndDie($debug);
-}
 
 try {
 
+    $post = null;
+    if (!Input::get('Message')) {
+        $post_raw = file_get_contents('php://input');
+        $post = to_utf8(trim($post_raw));
+    }  else {
+        if (isset($_POST["Message"])) {
+            $post = $_POST;
+        } elseif (isset($_GET["Message"])) {
+            $post = $_GET;
+        } else {
+            $post = null;
+        }
+    }
 
-    if (isset($_POST["Message"])) {
-        $message = $_POST['Message'];
-    } elseif (isset($_GET["Message"])) {
-        $message = $_GET['Message'];
+    if (!$post) {
+        if ($screamer) {
+            publish_to_sns("Could not find sent data in new->json", "php://input, POST and GET were empty");
+        }
+        printErrorJSONAndDie("Could not find sent data in new->json");
+    }
+
+    $message = null;
+    if (isset($post["Message"])) {
+        $message = $post['Message'];
     } else {
-        $message = null;
+        $debug = array('message'=> 'Did not find the message param', 'params' => $post);
+        if ($screamer) {
+            publish_to_sns("Did not find the Message Param", $debug);
+        }
+        printErrorJSONAndDie($debug);
     }
 
     $job = null;
@@ -89,7 +91,14 @@ try {
     upload_local_storage($nid);
 
 
-    printOkJSONAndDie('images put into queue; nid is ' . $nid);
+
+    if ($screamer) {
+        $post = file_get_contents('php://input');
+        $data = array('post'=>$post,'job_message'=>$job,'nid'=>$nid);
+        publish_to_sns("new entry for new->json", $data);
+    }
+
+    printOkJSONAndDie('job put into transciptions; nid is ' . $nid);
 }
 catch(Exception $e) {
     if ($screamer) {
