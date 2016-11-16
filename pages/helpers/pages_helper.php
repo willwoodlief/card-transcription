@@ -47,6 +47,8 @@ function publish_to_sns($title,$message) {
     try {
         $client->publish( $payload );
     } catch ( Exception $e ) {
+        #print $e->getMessage();
+        #print $e->getTraceAsString();
         $email = Config::get('contact/email');
         email($email,"could not publish: $title" ,$message);
     }
@@ -1403,5 +1405,19 @@ function _pages_isLocalHost() {
 
     return false;
 
+}
+
+function execInBackground($cmd) {
+    if (substr(php_uname(), 0, 7) == "Windows"){
+        pclose(popen("start /B ". $cmd, "r"));
+    }
+    else {
+        exec($cmd . " &> /dev/null");
+    }
+}
+
+function runAfterHook($root_path_of_app,$jobid) {
+    $command = "php $root_path_of_app/tasks/after_hook.php $jobid";
+    execInBackground($command);
 }
 
