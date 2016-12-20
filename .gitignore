@@ -28,6 +28,5 @@
 
 .idea/*
 
-/vendor/composer/
 /vendor/symfony/yaml/Tests/
 
