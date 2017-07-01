@@ -55,7 +55,10 @@ if (!securePage($_SERVER['PHP_SELF'])){die(); }
 $completed = get_jobs(null,true,true);
 $jobs = json_decode(json_encode($completed));
 $completed = [];
+$remID = [];
 for($i=0; $i < sizeof($jobs); $i++) {
+    if (array_key_exists($jobs[$i]->job->id, $remID)) {continue;}
+    $remID[$jobs[$i]->job->id] = true;
     $node = [];
     $node['id'] = $jobs[$i]->job->id;
     $node['client_id'] = $jobs[$i]->job->client_id;

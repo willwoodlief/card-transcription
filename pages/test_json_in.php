@@ -43,7 +43,8 @@ if(!empty($_POST['create_entry'])) {
 
             } else {
                 $params = ['Message'=> json_encode($jsonObj)];
-                $url_to_use = $settings->website_url . '/pages/upload_from_bucket.php';
+               // $url_to_use = $settings->website_url . '/pages/upload_from_bucket.php';
+                $url_to_use ='http://localhost/ht/pages/upload_from_bucket.php';
                 $servMsg = rest_helper($url_to_use, $params,  'POST',  'json',false);
             }
 

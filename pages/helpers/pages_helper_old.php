@@ -47,6 +47,8 @@ function publish_to_sns($title,$message) {
     try {
         $client->publish( $payload );
     } catch ( Exception $e ) {
+        #print $e->getMessage();
+        #print $e->getTraceAsString();
         $email = Config::get('contact/email');
         email($email,"could not publish: $title" ,$message);
     }
@@ -1116,8 +1118,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
                 'created_timestamp' =>  $rec->created_timestamp,
                 'uploaded_timestamp' => $rec->uploaded_timestamp,
                 'modified_timestamp' =>  $rec->modified_timestamp,
-                'transcribed_timestamp' => $rec->transcribed_timestamp,  
-				'checked_timestamp' => $rec->checked_timestamp,
+                'transcribed_timestamp' => $rec->transcribed_timestamp,  'checked_timestamp' => $rec->checked_timestamp,
                 'uploader_email' => $rec->uploader_email,
                 'uploader_lname' =>  $rec->uploader_lname,
                 'uploader_fname' => $rec->uploader_fname
@@ -1349,114 +1350,17 @@ function canEditJob($user,$jobid) {
         return true;
     }
 }
-// Set API's in users/private_init.php
-function call_api($job,$website_url) {
+
+function call_api($job) {
    $base_url = Config::get('api/on_check');
     $query = [];
-	if (!empty($job->transcribe->email) )  {
+   if (!empty($job->transcribe->email) )  {
        array_push($query , 'email='. urlencode($job->transcribe->email));
    }
-   	//Duplicate Website - Labeled as 'url' for enRICH Data and 'website' for everything else
+
     if (!empty(trim($job->transcribe->website)) )  {
         array_push($query , 'url='. urlencode($job->transcribe->website));
     }
-	if (!empty(trim($job->transcribe->website)) )  {
-        array_push($query , 'website='. urlencode($job->transcribe->website));
-    }
-	if (!empty($job->transcribe->fname) )  {
-       array_push($query , 'fname='. urlencode($job->transcribe->fname));
-   }
-    if (!empty($job->transcribe->mname) )  {
-       array_push($query , 'mname='. urlencode($job->transcribe->mname));
-   }
-	if (!empty($job->transcribe->lname) )  {
-       array_push($query , 'lname='. urlencode($job->transcribe->lname));
-   }
-	if (!empty($job->transcribe->suffix) )  {
-       array_push($query , 'suffix='. urlencode($job->transcribe->suffix));
-   }
-	if (!empty($job->transcribe->title) )  {
-       array_push($query , 'title='. urlencode($job->transcribe->title));
-   }
-	if (!empty($job->transcribe->address) )  {
-       array_push($query , 'address='. urlencode($job->transcribe->address));
-   }
-	if (!empty($job->transcribe->city) )  {
-       array_push($query , 'city='. urlencode($job->transcribe->city));
-   }
-	if (!empty($job->transcribe->state) )  {
-       array_push($query , 'state='. urlencode($job->transcribe->state));
-   }
-	if (!empty($job->transcribe->zip) )  {
-       array_push($query , 'zip='. urlencode($job->transcribe->zip));
-   }
-	if (!empty($job->transcribe->work_phone) )  {
-       array_push($query , 'work_phone='. urlencode($job->transcribe->work_phone));
-   }
-	if (!empty($job->transcribe->work_phone_extension) )  {
-       array_push($query , 'work_phone_extension='. urlencode($job->transcribe->work_phone_extension));
-   }
-	if (!empty($job->transcribe->cell_phone) )  {
-       array_push($query , 'cell_phone='. urlencode($job->transcribe->cell_phone));
-   }
-	if (!empty($job->transcribe->fax) )  {
-       array_push($query , 'fax='. urlencode($job->transcribe->fax));
-   }
-	if (!empty($job->transcribe->skype) )  {
-       array_push($query , 'skype='. urlencode($job->transcribe->skype));
-   }
-	if (!empty($job->transcribe->company) )  {
-       array_push($query , 'company='. urlencode($job->transcribe->company));
-   }
-	if (!empty($job->transcribe->country) )  {
-       array_push($query , 'country='. urlencode($job->transcribe->country));
-   }
-	if (!empty($job->transcribe->twitter) )  {
-       array_push($query , 'twitter='. urlencode($job->transcribe->twitter));
-   }
-	if (!empty($job->transcribe->home_phone) )  {
-       array_push($query , 'home_phone='. urlencode($job->transcribe->home_phone));
-   }
-	if (!empty($job->transcribe->other_phone) )  {
-       array_push($query , 'other_phone='. urlencode($job->transcribe->other_phone));
-   }
-	if (!empty($job->transcribe->notes) )  {
-       array_push($query , 'notes='. urlencode($job->transcribe->notes));
-   }
-	if (!empty($job->transcribe->tag_string) )  {
-       array_push($query , 'tag_string='. urlencode($job->transcribe->tag_string));
-   }
-   // User id, Transcription id, Profile id
-	if (!empty($job->job->id) )  {
-       array_push($query , 'transcription_id='. urlencode($job->job->id));
-   }
-   	if (!empty($job->job->client_id) )  {
-       array_push($query , 'user_id='. urlencode($job->job->client_id));
-   }
-   	if (!empty($job->job->profile_id) )  {
-       array_push($query , 'profile_id='. urlencode($job->job->profile_id));
-   }
-   // Timestamps
-   	if (!empty($job->job->uploaded_timestamp) )  {
-       array_push($query , 'uploaded_timestamp='. urlencode($job->job->uploaded_timestamp));
-   }
-   if (!empty($job->job->transcribed_timestamp) )  {
-       array_push($query , 'transcribed_timestamp='. urlencode($job->job->transcribed_timestamp));
-   }
-   // Images   
-	if (!empty($job->images->org_side_a->url) )  {
-       array_push($query , 'org_side_a='. urlencode($job->images->org_side_a->url));
-   }
-   	if (!empty($job->images->org_side_b->url) )  {
-       array_push($query , 'org_side_b='. urlencode($job->images->org_side_b->url));
-   }
-   	if (!empty($job->images->edit_side_a->url) )  {
-       array_push($query , 'edit_side_a='. urlencode($job->images->edit_side_a->url));
-   }
-   	if (!empty($job->images->edit_side_b->url) )  {
-       array_push($query , 'edit_side_b='. urlencode($job->images->edit_side_b->url));
-   }
-   
     $q = implode('&',$query);
 
     if (!empty($q)) {
@@ -1464,12 +1368,6 @@ function call_api($job,$website_url) {
         $resp = get_curl_resp_code($full_url);
         if ($resp != 200 && $resp != 404) {
             publish_to_sns("Could not send api information", "While sending, got the response code of : $resp . The url was $full_url");
-        }
-
-        $full_url = $website_url .'/processes/main_function.php'. '&' . $q;
-        $resp = get_curl_resp_code($full_url);
-        if ($resp != 200 && $resp != 404) {
-            publish_to_sns("Could not send main function information", "While sending, got the response code of : $resp . The url was $full_url");
         }
     }
 }
@@ -1509,8 +1407,16 @@ function _pages_isLocalHost() {
 
 }
 
+function execInBackground($cmd) {
+    if (substr(php_uname(), 0, 7) == "Windows"){
+        pclose(popen("start /B ". $cmd, "r"));
+    }
+    else {
+        exec($cmd . " &> /dev/null");
+    }
+}
+
 function runAfterHook($root_path_of_app,$jobid) {
-    return;
     $command = "php $root_path_of_app/tasks/after_hook.php $jobid";
     execInBackground($command);
 }
