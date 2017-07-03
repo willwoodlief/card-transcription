@@ -1,7 +1,7 @@
 var Notify = window.Notify.default;
 $(function(){
     if (!Notify.needsPermission) {
-        doNotification(0,true);
+        doNotification(0,false);
     } else if (Notify.isSupported()) {
         Notify.requestPermission(onPermissionGranted, onPermissionDenied);
     }
@@ -87,7 +87,7 @@ $('#start-notifications').click(function() {
 
 
     if (!Notify.needsPermission) {
-        doNotification(0,true);
+        doNotification(0,false);
     } else if (Notify.isSupported()) {
         Notify.requestPermission(onPermissionGranted, onPermissionDenied);
     }

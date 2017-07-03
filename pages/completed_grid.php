@@ -58,6 +58,13 @@ $completed = [];
 $remID = [];
 for($i=0; $i < sizeof($jobs); $i++) {
     if (array_key_exists($jobs[$i]->job->id, $remID)) {continue;}
+
+    if (  ( empty(trim($jobs[$i]->transcribe->fname)) && empty(trim($jobs[$i]->transcribe->lname)) )) {
+        $linkName = '(Not Named)';
+    } else {
+        $linkName = $jobs[$i]->transcribe->fname.' '.$jobs[$i]->transcribe->lname;
+    }
+
     $remID[$jobs[$i]->job->id] = true;
     $node = [];
     $node['id'] = $jobs[$i]->job->id;
@@ -71,7 +78,7 @@ for($i=0; $i < sizeof($jobs); $i++) {
     $node['card_name'] = $jobs[$i]->transcribe->fname.' '.$jobs[$i]->transcribe->lname;
     $node['card_link'] = '<a href="'.$abs_us_web_root.'pages/job.php?jobid=' .$jobs[$i]->job->id.
         '" target="_BLANK"> ' .
-        $jobs[$i]->transcribe->fname.' '.$jobs[$i]->transcribe->lname .
+        $linkName .
         '</a>';
     array_push($completed,$node);
 }

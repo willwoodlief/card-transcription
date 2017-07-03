@@ -1077,7 +1077,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
           j.uploader_fname, 
           
           j.fname, j.mname, j.lname, j.suffix, j.title,
-          j.address, j.city, j.state, j.zip, j.email, j.website, j.work_phone,
+          j.suit,j.address, j.city, j.state, j.zip, j.email, j.website, j.work_phone,
           j.cell_phone, j.fax, j.skype, j.company,j.work_phone_extension,
           j.country,j.twitter,j.home_phone,j.other_phone,j.notes,
           utrans.id as utrans_id,utrans.email as utrans_email, utrans.fname as utrans_fname, utrans.lname as utrans_lname,
@@ -1125,6 +1125,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
         
         $transcribe = [
             'fname' => $rec->fname, 'mname' => $rec->mname, 'lname' => $rec->lname, 'suffix' => $rec->suffix, 'title' => $rec->title,
+            'suit' => $rec->suit,
             'address' => $rec->address, 'city' => $rec->city, 'state' => $rec->state, 'zip' => $rec->zip, 'email' => $rec->email,
             'website' => $rec->website, 'work_phone' => $rec->work_phone,'work_phone_extension'=>$rec->work_phone_extension,
             'cell_phone' => $rec->cell_phone, 'fax' => $rec->fax, 'skype' => $rec->skype,
@@ -1378,9 +1379,17 @@ function call_api($job,$website_url) {
 	if (!empty($job->transcribe->title) )  {
        array_push($query , 'title='. urlencode($job->transcribe->title));
    }
+
+    if (!empty($job->transcribe->suit) )  {
+        array_push($query , 'suit='. urlencode($job->transcribe->suit));
+    }
+
 	if (!empty($job->transcribe->address) )  {
        array_push($query , 'address='. urlencode($job->transcribe->address));
-   }
+    }
+
+
+
 	if (!empty($job->transcribe->city) )  {
        array_push($query , 'city='. urlencode($job->transcribe->city));
    }
@@ -1514,4 +1523,27 @@ function runAfterHook($root_path_of_app,$jobid) {
     $command = "php $root_path_of_app/tasks/after_hook.php $jobid";
     execInBackground($command);
 }
+
+//deletes all job information from the local database (warning doing this on production machine will remove all real jobs)
+//only call from command line, do not link to gui
+function deleteAllJobs() {
+    $db = DB::getInstance();
+    $db->query("DELETE FROM ht_tag_jobs WHERE 1");
+    $db->query("DELETE FROM ht_file_watching WHERE 1");
+    $db->query("DELETE FROM ht_images WHERE 1");
+    $db->query("DELETE FROM ht_waiting WHERE 1");
+    $db->query("DELETE FROM ht_jobs WHERE 1");
+}
+
+function recursiveRemove($dir) {
+    $structure = glob(rtrim($dir, "/").'/*');
+    if (is_array($structure)) {
+        foreach($structure as $file) {
+            if (is_dir($file)) recursiveRemove($file);
+            elseif (is_file($file)) unlink($file);
+        }
+    }
+    rmdir($dir);
+}
+
 

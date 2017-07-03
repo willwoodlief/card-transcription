@@ -38,6 +38,18 @@ require_once $abs_us_root.$us_url_root.'users/includes/header_not_closed.php';
         padding-left: 5px;
         padding-right: 5px;
     }
+
+    .large-address {
+        position: absolute;
+        width: 30em;
+        background-color: floralwhite;
+        z-index: 1000;
+    }
+
+    .address-wrapper {
+        padding: 0;
+        margin: 0;
+    }
 </style>
 
 </head>
@@ -128,7 +140,7 @@ if(!empty($_POST['transcribe'])) {
     }
     $fields_to_check = [
         'fname','mname','lname','suffix',
-        'title','address','city','state','zip',
+        'title','suit','address','city','state','zip',
         'email','website','work_phone','work_phone_extension','cell_phone','fax',
         'skype','company','country','twitter','home_phone','other_phone','notes'];
 
@@ -137,8 +149,10 @@ if(!empty($_POST['transcribe'])) {
     foreach($fields_to_check as $key=>$field) {
         $val = to_utf8(Input::get($field));
        // echo "get {$key} => {$field} == {$val}<br>";
-        if (Input::get($field)) {
+        if (trim(Input::get($field))) {
             $fields[$field] = Input::get($field);
+        } else {
+            $fields[$field] = null;
         }
     }
 
@@ -269,7 +283,7 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
         <div class="row" style="">
 
                     <form class="a-job-form" action="job.php" name="job" id="job-form" method="post" class="">
-                        <div class="col-xs-12" style="">
+                        <div class="col-xs-12" style="position:relative">
 
                             <input type="hidden" name="jobid" value="<?=$job->job->id ?>" >
 
@@ -305,9 +319,17 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
 
                             <!-- this field can be used later for additional stuff with title, originated when spec was a little different and no need to take it out -->
 
+                            <div class="form-group  col-xs-1 input-job-group">
+                                <label for="suit" class="input-job-label">Suit, Apt</label>
+                                <input type="text" class="form-control input-job-box" name="suit" id="suit" value="<?=$job->transcribe->suit ?>">
+                            </div>
+
                             <div class="form-group  col-xs-2 input-job-group">
-                                <label for="address" class="input-job-label">Address</label>
-                                <input type="text" class="form-control input-job-box" name="address" id="address" value="<?=$job->transcribe->address ?>">
+                                <div class="address-wrapper">
+                                    <label for="address" class="input-job-label">Address  <span style="font-size: smaller;white-space: nowrap " class="input-job-label">(street lookup)<span></label>
+                                    <input type="text" class="form-control input-job-box" name="address" id="address" value="<?=$job->transcribe->address ?>">
+                                </div>
+
                             </div>
 
                             <div class="form-group  col-xs-1 input-job-group">
@@ -578,11 +600,14 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
 </script>
 
 <script src="js/auto_zip.js"></script>
+<script src="js/auto_complete.js"></script>
 <script src="js/jquery.phoenix.js"></script>
 <script src="js/jobform.js"></script>
 <script src="../users/js/jquery.noty.packaged.min.js"></script>
 <script src="js/jquery.formatter.min.js"></script>
 <script src="js/phone_numbers.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=<?= Config::get('keys/google') ?>&libraries=places&callback=initAutocomplete"
+        async defer></script>
 
 
 <script>

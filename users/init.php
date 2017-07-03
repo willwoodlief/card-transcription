@@ -58,7 +58,11 @@ $GLOBALS['config'] = array(
     ),
     'api'  => array(
         'on_check'=> getenv('API_ON_FINISH')
-    )
+
+    ),
+    'keys' => array(
+        'google'=> getenv('GOOGLE_API_KEY')
+    ),
 );
 
 //If you changed your UserSpice or UserCake database prefix
