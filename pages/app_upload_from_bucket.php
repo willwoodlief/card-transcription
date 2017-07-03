@@ -3,105 +3,95 @@
 # anyone can post to this, but unless the images are in the bucket,which can only be added to by authorized,
 # the post is ignored
 
-# ideally, this message would be passed by a private messaging system like aws sqs, but
+#ideally, this message would be passed by a private messaging system like aws sqs, but
 # have to write this assuming no way to set up a cron job or independent task that runs in background
 
 require_once '../users/init.php';
-//require_once $abs_us_root.$us_url_root.'/users/includes/header_json.php';
+require_once $abs_us_root.$us_url_root.'/users/includes/header_json.php';
 require_once $abs_us_root.$us_url_root.'pages/helpers/pages_helper.php';
 $screamer = true;
 
-// CURL TEST: https://transcription.enri.ch/pages/app_upload_from_bucket.php?client_id=2802&profile_id=1&uploader_email=feedleadcalls@gmail.com&bucket=enrich-scanner&side_a_key=e_img43b_id2813_p2_20170105.jpg&side_b_key=e_img43a_id2813_p2_20170105.jpg&notes=this is an example of notes&tags=some tags
- 
-$client_id = isset($_GET['client_id']) ? $_GET['client_id'] : NULL ;
-$profile_id = isset($_GET['profile_id']) ? $_GET['profile_id'] : NULL ;
-$uploader = isset($_GET['uploader_email']) ? $_GET['uploader_email'] : NULL ;
-$bucket =  isset($_GET['bucket']) ? $_GET['bucket'] : NULL ;
-$side_a_key = isset($_GET['side_a_key']) ? $_GET['side_a_key'] : NULL ;
-$side_b_key = isset($_GET['side_b_key']) ? $_GET['side_b_key'] : NULL ;
-$notes = isset($_GET['notes']) ? $_GET['notes'] : NULL ;
-$tags = isset($_GET['tags']) ? $_GET['tags'] : NULL ;
 
 try {
 
-$post = null;
-//    if (!Input::get('Message')) {
-//      $post_raw = file_get_contents('php://input');
-//        $post_prepped = to_utf8(trim($post_raw));
-//        $post= json_decode($post_prepped,true);
-//        if (!$post) {
-//            $what = get_json_last_err_string();
-//            $debug = array('message'=> 'Could not convert post to json',
-//                'json error' => $what,
-//                'json_attempted'=>$post_prepped   );
-//            if ($screamer) {
-//                publish_to_sns("Error Converting input to json", $debug);
-//            }
-//            printErrorJSONAndDie($debug);
-//        }
-//    }  else {
-//        if (isset($_POST["Message"])) {
-//            $post = $_POST;
-//        } elseif (isset($_GET["Message"])) {
-//            $post = $_GET;
-//        } else {
-//            $post = null;
-//        }
-//    }
+    $post = null;
+    if (!Input::get('Message')) {
+        $post_raw = file_get_contents('php://input');
+        $post_prepped = to_utf8(trim($post_raw));
+        $post= json_decode($post_prepped,true);
+        if (!$post) {
+            $what = get_json_last_err_string();
+            $debug = array('message'=> 'Could not convert post to json',
+                'json error' => $what,
+                'json_attempted'=>$post_prepped   );
+            if ($screamer) {
+                publish_to_sns("Error Converting input to json", $debug);
+            }
+            printErrorJSONAndDie($debug);
+        }
+    }  else {
+        if (isset($_POST["Message"])) {
+            $post = $_POST;
+        } elseif (isset($_GET["Message"])) {
+            $post = $_GET;
+        } else {
+            $post = null;
+        }
+    }
 
-//    if (!$post) {
-//        if ($screamer) {
-//            publish_to_sns("Could not find sent data in new->json", "php://input, POST and GET were empty");
-//        }
-//        printErrorJSONAndDie("Could not find sent data in new->json");
-//    }
-//
-//  $message = null;
-//    if (isset($post["Message"])) {
-//        $message = $post['Message'];
-//    } else {
-//        $debug = array('message'=> 'Did not find the message param', 'params' => $post);
-//        if ($screamer) {
-//            publish_to_sns("Did not find the Message Param", $debug);
-//        }
-//        printErrorJSONAndDie($debug);
-//    }
+    if (!$post) {
+        if ($screamer) {
+            publish_to_sns("Could not find sent data in new->json", "php://input, POST and GET were empty");
+        }
+        printErrorJSONAndDie("Could not find sent data in new->json");
+    }
+
+    $message = null;
+    if (isset($post["Message"])) {
+        $message = $post['Message'];
+    } else {
+        $debug = array('message'=> 'Did not find the message param', 'params' => $post);
+        if ($screamer) {
+            publish_to_sns("Did not find the Message Param", $debug);
+        }
+        printErrorJSONAndDie($debug);
+    }
 
     $job = null;
-//    if ($message) {
-//       $o_message = to_utf8(trim($message));
-       //unescape newlines from \" to "
-//        $message = str_replace('\"','"',$o_message);
-//        $job = json_decode($message);
-//        if (!$job) {
-//            $what = get_json_last_err_string();
-//            $debug = array('message'=> 'Could not convert message to json',
-//                            'json error' => $what,
-//                             'json_attempted'=>$message   );
-//           if ($screamer) {
-//
-//                publish_to_sns("Error Converting Json of new->json", $debug);
-//            }
-//            printErrorJSONAndDie($debug);
-//        }
-//    } else {
-//        if ($screamer) {
-//
-//           publish_to_sns("Logic Error in new->json", '..?...');
-//        }
-//        printErrorJSONAndDie('Logic Error');
-//    }
+    if ($message) {
+        $o_message = to_utf8(trim($message));
+        //unescape newlines from \" to "
+        $message = str_replace('\"','"',$o_message);
+        $job = json_decode($message);
+        if (!$job) {
+            $what = get_json_last_err_string();
+            $debug = array('message'=> 'Could not convert message to json',
+                'json error' => $what,
+                'json_attempted'=>$message   );
+            if ($screamer) {
+
+                publish_to_sns("Error Converting Json of new->json", $debug);
+            }
+            printErrorJSONAndDie($debug);
+        }
+    } else {
+        if ($screamer) {
+
+            publish_to_sns("Logic Error in new->json", '..?...');
+        }
+        printErrorJSONAndDie('Logic Error');
+    }
 
 //we ignore subject
 
-//    $client_id = $job->client_id;
-//    $profile_id = $job->profile_id;
-//    $bucket = $job->bucket;
-//    $side_a_key = $job->side_a_key;
-//    $side_b_key = $job->side_b_key;
-//    $uploader = $job->uploader_email;
-//    $notes = $job->notes;
-//    $tags = $job->tags;
+    $client_id = $job->client_id;
+    $profile_id = $job->profile_id;
+    $bucket = $job->bucket;
+    $side_a_key = $job->side_a_key;
+    $side_b_key = $job->side_b_key;
+    $uploader = $job->uploader_email;
+    $notes = $job->notes;
+    $tags = $job->tags;
     $ext_a = substr(strrchr($side_a_key, '.'), 1);
     $ext_b = substr(strrchr($side_b_key, '.'), 1);
     $this_user = new User('admin');
@@ -115,20 +105,17 @@ $post = null;
 
     if ($screamer) {
         $post = file_get_contents('php://input');
-//      $data = array('post'=>$post,'job_message'=>$job,'nid'=>$nid);
-		$data = array('userid'=>$client_id,'profile'=>$profile_id,'nid'=>$nid);
-        publish_to_sns("new entry for mobile app", $data);
+        $data = array('post'=>$post,'job_message'=>$job,'nid'=>$nid);
+        publish_to_sns("new entry for new->json", $data);
     }
-    printOkJSONAndDie(array('status' => 200, 'nid' => $nid));
-//    printOkJSONAndDie('job put into transciptions; nid is ' . $nid);
+
+    printOkJSONAndDie('job put into transciptions; nid is ' . $nid);
 }
 catch(Exception $e) {
     if ($screamer) {
         $debug = array('message'=> $e->getMessage(), 'trace' => $e->getTrace());
         publish_to_sns("Error in new->json", $debug);
     }
-    printErrorJSONAndDie('error', array('status' => 400, 'msg' => $e->getMessage()));
-//    printErrorJSONAndDie('could not insert job: '. $e->getMessage() . "\n" . $e->getTraceAsString());
+    printErrorJSONAndDie('could not insert job: '. $e->getMessage() . "\n" . $e->getTraceAsString());
 }
-
 
