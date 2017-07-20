@@ -55,7 +55,16 @@ if (!securePage($_SERVER['PHP_SELF'])){die(); }
 $completed = get_jobs(null,false,false);
 $jobs = json_decode(json_encode($completed));
 $completed = [];
+$remID = [];
 for($i=0; $i < sizeof($jobs); $i++) {
+    if (array_key_exists($jobs[$i]->job->id, $remID)) {continue;}
+    if (  ( empty(trim($jobs[$i]->transcribe->fname)) && empty(trim($jobs[$i]->transcribe->lname)) )) {
+        $linkName = '(Not Named)';
+    } else {
+        $linkName = $jobs[$i]->transcribe->fname.' '.$jobs[$i]->transcribe->lname;
+    }
+    $remID[$jobs[$i]->job->id] = true;
+
     $node = [];
     $node['id'] = $jobs[$i]->job->id;
     $node['client_id'] = $jobs[$i]->job->client_id;

@@ -24,7 +24,7 @@ if (!securePage($_SERVER['PHP_SELF'])){die(); }
     <link rel="stylesheet" href="../users/js/plugins/SlickGrid/css/smoothness/jquery-ui-1.11.3.custom.css" type="text/css"/>
     <link href="../users/js/plugins/SlickGrid/slick.grid.css" rel="stylesheet" type="text/css">
     <link href="../users/js/plugins/SlickGrid/examples/examples.css" rel="stylesheet" type="text/css">
-    <title>Jobs Waiting for Checks Report</title>
+    <title>Completed Jobs Report</title>
     <style>
         .slick-headerrow-column {
             background: #87ceeb;
@@ -52,12 +52,13 @@ if (!securePage($_SERVER['PHP_SELF'])){die(); }
 </head>
 <body style="background-color: floralwhite">
 <?php
-$completed = get_jobs(null,true,false);
+$completed = get_jobs(null,true,true,null,null,false,1);
 $jobs = json_decode(json_encode($completed));
 $completed = [];
 $remID = [];
 for($i=0; $i < sizeof($jobs); $i++) {
     if (array_key_exists($jobs[$i]->job->id, $remID)) {continue;}
+
     if (  ( empty(trim($jobs[$i]->transcribe->fname)) && empty(trim($jobs[$i]->transcribe->lname)) )) {
         $linkName = '(Not Named)';
     } else {
@@ -72,7 +73,8 @@ for($i=0; $i < sizeof($jobs); $i++) {
     $node['uploaded_timestamp'] = $jobs[$i]->job->uploaded_timestamp;
     $node['seconds_for_transcription'] = $jobs[$i]->job->transcribed_timestamp - $jobs[$i]->job->uploaded_timestamp;
     $node['transcriber_name'] = $jobs[$i]->translater->lname;
-    $node['seconds_for_checking'] = time() - $jobs[$i]->job->transcribed_timestamp;
+    $node['checker_name'] = $jobs[$i]->checker->lname;
+    $node['seconds_for_checking'] = $jobs[$i]->job->checked_timestamp - $jobs[$i]->job->transcribed_timestamp;
     $node['card_name'] = $jobs[$i]->transcribe->fname.' '.$jobs[$i]->transcribe->lname;
     $node['card_link'] = '<a href="'.$abs_us_web_root.'pages/job.php?jobid=' .$jobs[$i]->job->id.
         '" target="_BLANK"> ' .
@@ -87,7 +89,7 @@ for($i=0; $i < sizeof($jobs); $i++) {
 
 
 ?>
-    <div style="width:810px;" style="padding: 0px;margin: 0px">
+    <div style="width:930px;" style="padding: 0px;margin: 0px">
         <div id="myGrid" style="width:100%;height:500px;padding: 0px;margin: 0px"></div>
     </div>
 
@@ -104,6 +106,7 @@ for($i=0; $i < sizeof($jobs); $i++) {
 <script src="../users/js/plugins/SlickGrid/plugins/slick.rowselectionmodel.js"></script>
 <script src="../users/js/plugins/SlickGrid/slick.grid.js"></script>
 <script src="js/human_time_span.js"></script>
+
 
 <script>
     var dataView;
@@ -127,7 +130,8 @@ for($i=0; $i < sizeof($jobs); $i++) {
         {id: "uploaded_timestamp", name: "Uploaded Time", field: "uploaded_timestamp", width: 150,sortable: true,sort_hint:'numeric_to_date',formatter:timestamp_formatter},
         {id: "seconds_for_transcription", name: "Processing Time", field: "seconds_for_transcription", width: 120,sortable: true,sort_hint:'numeric_to_span',formatter:seconds_formatter},
         {id: "transcriber_name", name: "Transcriber Name", field: "transcriber_name", width: 120,sortable: true,sort_hint:'alpha'},
-        {id: "seconds_for_checking", name: "Waiting for Checking", field: "seconds_for_checking", width: 120,sortable: true,sort_hint:'numeric_to_span',formatter:seconds_formatter}
+        {id: "seconds_for_checking", name: "Checking Time", field: "seconds_for_checking", width: 120,sortable: true,sort_hint:'numeric_to_span',formatter:seconds_formatter},
+        {id: "checker_name", name: "Checker Name", field: "checker_name", width: 120,sortable: true,sort_hint:'alpha'}
     ];
 
 
@@ -234,7 +238,7 @@ for($i=0; $i < sizeof($jobs); $i++) {
     });
 
     function link_formatter( row, cell, value, columnDef, dataContext ) {
-        return value;
+        return dataContext['card_link'];
     }
 
     function timestamp_formatter( row, cell, value, columnDef, dataContext ) {

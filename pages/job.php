@@ -50,6 +50,48 @@ require_once $abs_us_root.$us_url_root.'users/includes/header_not_closed.php';
         padding: 0;
         margin: 0;
     }
+
+    div.duplicate-control {
+        background-color: #eaeaea;
+    }
+
+    div.duplicate-control div.message {
+        display: inline-block;
+        margin-top: 1em;
+    }
+
+    div.duplicate-control.start-duplicate-hidden {
+        display: none;
+    }
+    div.duplicate-control div.duplicate-button-holder {
+        margin-top: 1em;
+    }
+
+    div.duplicate-control div.dupe-link-container {
+        margin-left: 2em;
+    }
+
+    div.is-table-row {
+        display: table;
+        width: 90%;
+        margin: auto;
+        margin-bottom: .9em;
+
+    }
+
+    div.is-table-row > [class*="col-"] {
+        float: none;
+        display: table-cell;
+        vertical-align: top;
+    }
+
+    input[name='email'].duplicate {
+        background-color: mediumpurple;
+        color: white;
+        border: double red 1px;
+    }
+
+
 </style>
 
 </head>
@@ -76,7 +118,9 @@ if (empty($info_hash)) {
     die('Cannot find Job ID');
 }
 
+
 $job = json_decode(json_encode($info_hash))[0];
+
 
 //print_nice($job);
 $validation = new Validate();
@@ -97,8 +141,14 @@ elseif ($user && $user->roles()  && in_array("Checker", $user->roles())) {
 }
 
 
+
+
 if(!empty($_POST['approve'])) {
 
+    $token = $_POST['csrf'];
+    if (!Token::check($token)) {
+        die('Token doesn\'t match!');
+    }
     if (!$job->translater->id) { die("Cannot approve something that was not done first");}
     clearJobViewStamp($jobid);
     if ($user && $user->roles()  && in_array("Administrator", $user->roles())) {
@@ -128,6 +178,68 @@ if(!empty($_POST['approve'])) {
     } else {
         die('Role that is not checker or admin has submitted wrong form');
     }
+}
+
+if(!empty($_POST['bad_scan'])) {
+    clearJobViewStamp($jobid);
+    $token = $_POST['csrf'];
+    if (!Token::check($token)) {
+        die('Token doesn\'t match!');
+    }
+
+
+    $fields['fname'] = 'DELETE';
+    $fields['lname'] = 'BAD SCAN';
+    $fields['transcriber_user_id'] = $user->data()->id;
+    $fields['transcribed_at'] =  time();
+    $what = $db->update('ht_jobs', $jobid, $fields);
+    if (!$what) {
+        $validation->addError($db->error());
+        $error_count ++;
+    }
+
+
+    if ($error_count == 0) {
+        Redirect::to($us_url_root."pages/transcribe.php");
+    }
+
+
+}
+
+if(!empty($_POST['duplicate'])) {
+    clearJobViewStamp($jobid);
+    $token = $_POST['csrf'];
+    if (!Token::check($token)) {
+        die('Token doesn\'t match!');
+    }
+    $email_for_duplicate = to_utf8(Input::get('email_for_duplicate'));
+    if (!$email_for_duplicate) {
+        $validation->addError("email not passed to duplicate code in hidden input");
+        $error_count ++;
+    } else {
+        $query = checkForDuplicateEmailsWithUser($email_for_duplicate,$job->job->client_id);
+        if (!$query) {
+            $validation->addError("this is not a duplicate");
+            $error_count ++;
+        } else {
+            //set duplicate flag
+            $fields['duplicate'] = 1;
+            $fields['fname'] = 'DELETE';
+            $fields['lname'] = 'DUPLICATE CARD';
+            $fields['email'] = $email_for_duplicate;
+            $what = $db->update('ht_jobs', $jobid, $fields);
+            if (!$what) {
+                $validation->addError($db->error());
+                $error_count ++;
+            }
+        }
+
+        if ($error_count == 0) {
+            Redirect::to($us_url_root."pages/transcribe.php");
+
+        }
+    }
+
 }
 
 //print_nice($job);
@@ -230,9 +342,14 @@ if(!empty($_POST['transcribe'])) {
 $can_edit_this_job = canEditJob($user,$jobid);
 if ($can_edit_this_job) {
     addJobViewStamp($user,$jobid);
+    $frame_css = '';
 } else {
     #redirect
-    Redirect::to($redirect_timeout_url);
+    #Redirect::to($redirect_timeout_url);
+    # set a read only flag for all fields
+    $validation->addError("Screen Is Now Read Only for this job");
+    $error_count ++;
+    $frame_css = 'pointer-events: none;';
 
 }
 
@@ -243,49 +360,116 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
     $heightForFrame = $job->images->edit_side_a->height;
 }
 
-
+$csrf = Token::generate();
 ?>
+
+<style>
+    div.not-duplicate {
+    <?php if ($job->job->duplicate > 0) { ?>
+        display: none;
+    <?php } ?>
+    }
+
+    div.duplicate {
+    <?php if ($job->job->duplicate == 0) { ?>
+        display: none;
+    <?php } ?>
+    }
+</style>
 
 <div id="page-wrapper" style="">
     <?php if ($error_count> 0) { ?>
     <div class="row">
-        <div id="form-errors" class="col-sm-offset-2 col-sm-4">
+        <div id="form-errors" class="col-xs-offset-2 col-xs-4">
             <?=$validation->display_errors();?>
         </div>
     </div>
     <?php } ?>
-	<div class="container-fluid">
+
+    <?php if ($job->job->duplicate > 0) {
+        $maybe_hidden_class = '';
+    } else {
+        $maybe_hidden_class = 'hide-top-control';
+    }
+    ?>
+    <div class="container-fluid">
+        <div class="row not-duplicate">
+            <?php if ($b_is_checker && $job->translater->id) { ?>
+                <div class="panel panel-default col-xs-8" >
+                    <div class="panel-body centerBlock">
+                        <div class="row">
+                            <div class="col-xs-3" >
+                                <h3 style="margin-top: 0">Approve This Transcription</h3>
+                            </div>
+                            <div class="col-xs-4">
+                                <form class="a-job-form" action="job.php" name="job" id="approve-form" method="post">
+                                    <input class='btn btn-primary' type='submit' name="approve" value='Approve Without Changing' />
+                                    <input type="hidden" name="csrf" value="<?=$csrf?>" />
+                                    <input type="hidden" name="jobid" value="<?=$job->job->id ?>" />
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            <?php } ?>
+        </div>
+
+
 		<!-- Page Heading -->
-        <?php if ($b_is_checker && $job->translater->id) { ?>
-				<!-- Content goes here -->
-        <div class="row">
-            <div class="panel panel-default" class="col-sm-3">
-                <div class="panel-body centerBlock">
-
-
+        <div class="row  is-table-row duplicate">
+            <div class="panel panel-warning col-xs-3 duplicate-control <?= $maybe_hidden_class ?>" >
+                <div class="row ">
+                    <div class="col-xs-5  message" >
+                        Duplicate Detected!
+                    </div>
+                    <div class="col-xs-7 duplicate-button-holder">
                         <form class="a-job-form" action="job.php" name="job" id="approve-form" method="post">
-                            <div class="col-sm-3">
-                                <h3>Approve This Transcription</h3>
-                            </div>
-                            <div class="col-sm-3">
-                                <input class='btn btn-primary' type='submit' name="approve" value='Approve Without Changing' />
-                            </div>
-
-                            <input type="hidden" name="csrf" value="<?=Token::generate();?>" />
+                            <input class='btn btn-warning' type='submit' name="duplicate" value='Mark As Duplicate' />
+                            <input type="hidden" name="csrf" value="<?=$csrf?>" />
                             <input type="hidden" name="jobid" value="<?=$job->job->id ?>" />
+                            <input type="hidden" name="email_for_duplicate" id = "email_for_duplicate" value=""" />
                         </form>
 
 
+                    </div>
+                    <div class="row" style="clear: both">
+                        <div class="dupe-link-container"></div>
+                    </div>
                 </div>
             </div>
-        </div>
+            <div class="col-xs-1"></div>
+            <?php if ($b_is_checker && $job->translater->id) { ?>
+            <div class="panel panel-default col-xs-8" >
+                <div class="panel-body centerBlock">
+                    <div class="row">
+                        <div class="col-xs-3" >
+                            <h3 style="margin-top: 0">Approve This Transcription</h3>
+                        </div>
+                        <div class="col-xs-4">
+                            <form class="a-job-form" action="job.php" name="job" id="approve-form" method="post">
+                                <input class='btn btn-primary' type='submit' name="approve" value='Approve Without Changing' />
+                                <input type="hidden" name="csrf" value="<?=$csrf?>" />
+                                <input type="hidden" name="jobid" value="<?=$job->job->id ?>" />
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         <?php } ?>
-        <div class="row" style="">
+        </div>
+        <div class="row " style="">
 
                     <form class="a-job-form" action="job.php" name="job" id="job-form" method="post" class="">
                         <div class="col-xs-12" style="position:relative">
 
                             <input type="hidden" name="jobid" value="<?=$job->job->id ?>" >
+
+                            <div class="form-group col-xs-2 input-job-group">
+                                <label for="email" class="input-job-label" >Email</label>
+                                <input type="text" class="form-control input-job-box" name="email" id="email" value="<?=$job->transcribe->email ?>">
+                            </div>
 
                             <div class="form-group col-xs-1 input-job-group" style="">
 
@@ -317,7 +501,26 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                                 <input type="text" class="form-control input-job-box" name="title" id="title" value="<?=$job->transcribe->title ?>">
                             </div>
 
-                            <!-- this field can be used later for additional stuff with title, originated when spec was a little different and no need to take it out -->
+                            <div class="form-group col-xs-2 input-job-group">
+                                <label for="company" class="input-job-label" >Company</label>
+                                <input type="text" class="form-control input-job-box" name="company" id="company" value="<?=$job->transcribe->company ?>">
+                            </div>
+
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="work_phone" class="input-job-label">Work Phone</label>
+                                <input type="text" class="form-control input-job-box" name="work_phone" id="work_phone" value="<?=$job->transcribe->work_phone ?>">
+                            </div>
+
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="work_phone_extension" class="input-job-label">Extension</label>
+                                <input type="text" class="form-control input-job-box" name="work_phone_extension" id="work_phone_extension" value="<?=$job->transcribe->work_phone_extension ?>">
+                            </div>
+
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="cell_phone" class="input-job-label">Cell Phone</label>
+                                <input type="text" class="form-control input-job-box" name="cell_phone" id="cell_phone" value="<?=$job->transcribe->cell_phone ?>">
+                            </div>
+
 
                             <div class="form-group  col-xs-1 input-job-group">
                                 <label for="suit" class="input-job-label">Suit, Apt</label>
@@ -353,27 +556,6 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                                 <input type="text" class="form-control input-job-box" name="country" id="country" value="<?=$job->transcribe->country ?>">
                             </div>
 
-                        </div>
-
-
-                        <div class="col-xs-12 " style="">
-
-
-                            <div class="form-group col-xs-1 input-job-group">
-                                <label for="work_phone" class="input-job-label">Work Phone</label>
-                                <input type="text" class="form-control input-job-box" name="work_phone" id="work_phone" value="<?=$job->transcribe->work_phone ?>">
-                            </div>
-
-                            <div class="form-group col-xs-1 input-job-group">
-                                <label for="work_phone_extension" class="input-job-label">Extension</label>
-                                <input type="text" class="form-control input-job-box" name="work_phone_extension" id="work_phone_extension" value="<?=$job->transcribe->work_phone_extension ?>">
-                            </div>
-
-                            <div class="form-group col-xs-1 input-job-group">
-                                <label for="cell_phone" class="input-job-label">Cell Phone</label>
-                                <input type="text" class="form-control input-job-box" name="cell_phone" id="cell_phone" value="<?=$job->transcribe->cell_phone ?>">
-                            </div>
-
                             <div class="form-group col-xs-1 input-job-group">
                                 <label for="home_phone" class="input-job-label">Home Phone</label>
                                 <input type="text" class="form-control input-job-box" name="home_phone" id="home_phone" value="<?=$job->transcribe->home_phone ?>">
@@ -389,23 +571,7 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                                 <input type="text" class="form-control input-job-box" name="fax" id="fax" value="<?=$job->transcribe->fax ?>">
                             </div>
 
-                            <div class="form-group col-sm-2 input-job-group">
-                                <label for="email" class="input-job-label" >Email</label>
-                                <input type="text" class="form-control input-job-box" name="email" id="email" value="<?=$job->transcribe->email ?>">
-                            </div>
-
-                            <div class="form-group col-sm-2 input-job-group">
-                                <label for="company" class="input-job-label" >Company</label>
-                                <input type="text" class="form-control input-job-box" name="company" id="company" value="<?=$job->transcribe->company ?>">
-                            </div>
-
-                            <div class="form-group col-sm-2 input-job-group">
-                                <label for="website"  class="input-job-label">Website</label>
-                                <input type="text" class="form-control input-job-box" name="website" id="website" value="<?=$job->transcribe->website ?>">
-                            </div>
-
-
-                            <div class="form-group col-sm-1 input-job-group">
+                            <div class="form-group col-xs-1 input-job-group">
                                 <label for="skype" class="input-job-label">Skype</label>
                                 <input type="text" class="form-control input-job-box" name="skype" id="skype" value="<?=$job->transcribe->skype ?>">
                             </div>
@@ -415,9 +581,31 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                                 <input type="text" class="form-control input-job-box" name="twitter" id="twitter" value="<?=$job->transcribe->twitter ?>">
                             </div>
 
-                            <div class="form-group col-xs-5 input-job-group">
+                        </div>
+
+
+                        <div class="col-xs-12 " style="">
+
+
+
+
+
+
+                           
+
+
+
+                            <div class="form-group col-xs-2 input-job-group">
+                                <label for="website"  class="input-job-label">Website</label>
+                                <input type="text" class="form-control input-job-box" name="website" id="website" value="<?=$job->transcribe->website ?>">
+                            </div>
+
+
+
+
+                            <div class="form-group col-xs-4 input-job-group">
                                 <label for="notes" class="input-job-label">Notes</label>
-                                <input type="text" class="form-control input-job-box" name="notes" id="notes" value="<?=$job->transcribe->notes ?>">
+                                <input type="text" class="form-control input-job-box" name="notes" id="notes" value="<?=$job->transcribe->notes ?>" title="<?=$job->transcribe->notes ?>">
                             </div>
 
                             <div class="form-group col-xs-4 input-job-group">
@@ -425,7 +613,13 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                                 <input type="text" class="form-control input-job-box" name="tag_string" id="tag_string" value="<?=$job->transcribe->tag_string ?>">
                             </div>
 
-                            <div class="form-group col-sm-1 input-job-group">
+                            <div class="form-group col-xs-1 input-job-group">
+                                <label for="bad_scan" class="input-job-label"></label>
+                                <input class='btn btn-danger input-job-box' type='submit' name="bad_scan" id="bad_scan" value='Bad Scan' />
+                            </div>
+
+
+                            <div class="form-group col-xs-1 input-job-group">
                                 <label for="" class="input-job-label"></label>
                                 <input class='btn btn-primary input-job-box' type='submit' name="transcribe" value='Save!' />
                             </div>
@@ -437,7 +631,7 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                         </div> <!-- Fourth row -->
 
 
-                        <input type="hidden" name="csrf" value="<?=Token::generate();?>" />
+                        <input type="hidden" name="csrf" value="<?=$csrf?>" />
 
 
                     </form>
@@ -446,7 +640,7 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                 </div>
 
         <div class="row">
-            <div class="col-sm-6  "  style="background-color: floralwhite;">
+            <div class="col-xs-6  "  style="background-color: floralwhite;">
                     <div class="panel-group">
                         <div class="panel panel-default img-outer-holder">
 
@@ -463,15 +657,15 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
 
 
                                 ?>
-                                <iframe src="edit_job_image.php?jobid=<?= $job->job->id; ?>&side=0&force_original=0" name="side-a-edit" id="side-a-edit" height="<?= $heightForFrame + 250?>px" width="<?= $width + 30 ?>px" style=";border:0 none;"></iframe>
+                                <iframe src="edit_job_image.php?jobid=<?= $job->job->id; ?>&side=0&force_original=0" name="side-a-edit" id="side-a-edit" height="<?= $heightForFrame + 250?>px" width="<?= $width + 30 ?>px" style=";border:0 none;<?= $frame_css ?>"></iframe>
                             </div>
                             <div class="panel-footer">
                                 <div class="row">
-                                    <div class="col-sm-6 col-md-6">
+                                    <div class="col-xs-6 col-md-6">
                                         Side A <span style="font-size: smaller;padding-left: 10px"> (edited version or orginal if never edited)</span>
                                     </div>
 
-                                    <div class="col-sm-6 col-md-6">
+                                    <div class="col-xs-6 col-md-6">
 
                                         <div class="btn-group btn-group-justified">
                                             <div class="btn-group">
@@ -498,7 +692,7 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                     </div> <!-- end of panel group edited A -->
                 </div> <!-- END of 1/2 row -->
 
-            <div class="col-sm-6  "  style="background-color: floralwhite;">
+            <div class="col-xs-6  "  style="background-color: floralwhite;">
                 <div class="panel-group">
                     <div class="panel panel-default img-outer-holder">
 
@@ -514,15 +708,15 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
                                 }
 
                                 ?>
-                                <iframe src="edit_job_image.php?jobid=<?= $job->job->id; ?>&side=1&force_original=0" name="side-b-edit" id="side-b-edit" height="<?= $heightForFrame + 250 ?>px" width="<?= $width + 30 ?>px" style="border:0 none;"></iframe>
+                                <iframe src="edit_job_image.php?jobid=<?= $job->job->id; ?>&side=1&force_original=0" name="side-b-edit" id="side-b-edit" height="<?= $heightForFrame + 250 ?>px" width="<?= $width + 30 ?>px" style="border:0 none;<?= $frame_css ?>"></iframe>
                             </div>
                             <div class="panel-footer">
                             <div class="row">
-                                <div class="col-sm-6 col-md-6">
+                                <div class="col-xs-6 col-md-6">
                                     Side B <span style="font-size: smaller;padding-left: 10px"> (edited version or orginal if never edited)</span>
                                 </div>
 
-                                <div class="col-sm-6 col-md-6">
+                                <div class="col-xs-6 col-md-6">
                                     <div class="btn-group btn-group-justified">
                                         <div class="btn-group">
                                             <button id = "revert-edit-b" type="button" onclick="reload_b();"
@@ -587,19 +781,25 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
 				<!-- Content Ends Here -->
 
 </div> <!-- /.wrapper -->
-               
+
 
 <?php require_once $abs_us_root.$us_url_root.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
 
 <!-- Place any per-page javascript here -->
+<?php
+$real_good_dupe_flag = ( checkForDuplicateEmailsWithUser($job->transcribe->email,$job->job->client_id) ||  $job->job->duplicate > 0);
+?>
 <script>
     var jobid = <?= $jobid;?>;
+    var client_id = "<?= $job->job->client_id;?>";
+    var duplicate_flag = <?= $real_good_dupe_flag ? 'true' : 'false';?>;
     var start_view_time = Math.floor(Date.now()/1000);
     var timeout_in_seconds= <?= $settings->view_timeout_seconds ;?>;
     var redirect_timeout_url = '<?= $redirect_timeout_url ;?>';
 </script>
 
 <script src="js/auto_zip.js"></script>
+<script src="js/auto_duplicate.js"></script>
 <script src="js/auto_complete.js"></script>
 <script src="js/jquery.phoenix.js"></script>
 <script src="js/jobform.js"></script>
@@ -667,7 +867,17 @@ if ($heightForFrame < $job->images->edit_side_a->height ) {
     }
 
 
+
+
 </script>
+
+<?php if (!$can_edit_this_job) { ?>
+    <script>
+        $(function() {
+            $("input[type='text']").prop("disabled", true);
+        });
+    </script>
+<?php } ?>
 
 
 <?php require_once $abs_us_root.$us_url_root.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>

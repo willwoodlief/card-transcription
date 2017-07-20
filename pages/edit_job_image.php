@@ -36,6 +36,8 @@ if (empty($the_job)) {
 }
 $the_job = json_decode(json_encode($the_job))[0];
 
+$can_edit_this_job = canEditJob($user,$jobid);
+
 //print_nice($the_job);
 if ($side_int) {
     $image_url = $the_job->images->edit_side_b->url;
@@ -179,8 +181,18 @@ $base64 = getDataURI($body,$mime_type);
 
     $(document).click(function() {
         window.parent.get_iframe_clicks(window.frameElement.id);
+
     });
 </script>
+
+<?php if (!$can_edit_this_job) { ?>
+    <script>
+        $(function() {
+            $(".darkroom-container).prop("disabled", true);
+        });
+    </script>
+<?php } ?>
+
 
 
 </body>

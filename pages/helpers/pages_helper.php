@@ -1008,7 +1008,7 @@ function get_http_response_code($theURL) {
 }
 
 function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
-                  $transcribed_id = null,$checked_id=null,$b_only_free=false){
+                  $transcribed_id = null,$checked_id=null,$b_only_free=false,$n_dupe_policy = 0){
     global $settings,$user;
     $db = DB::getInstance();
 
@@ -1033,6 +1033,12 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
         $free_check = '';
     }
 
+    switch ($n_dupe_policy) {
+        case 0: { $dupe_where = ' AND j.duplicate = 0';break;}
+        case 1: { $dupe_where = ' AND j.duplicate > 0';break;}
+        case 2: { $dupe_where = '';break;}
+    }
+
 
 
     $where_ids = [];
@@ -1053,7 +1059,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
     }
 
     $where_stuff = "j.transcriber_user_id {$transcribed_op} null AND
-                        j.checker_user_id {$checked_op} null {$where_users} $free_check";
+                        j.checker_user_id {$checked_op} null {$where_users} $free_check {$dupe_where}";
 
     if ($jobid) {
         $jobid = intval($jobid);
@@ -1064,7 +1070,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
 
     $query = $db->query( "
         select 
-          j.id, j.client_id, j.profile_id, j.is_initialized,
+          j.id, j.client_id, j.profile_id, j.is_initialized, j.duplicate,
           j.transcriber_user_id, j.checker_user_id,
 
           j.created_at as created_timestamp,
@@ -1111,6 +1117,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
                 'client_id' => $rec->client_id,
                 'profile_id' => $rec->profile_id,
                 'is_initialized' => $rec->is_initialized,
+                'duplicate' => $rec->duplicate,
                 'transcriber_user_id' =>  $rec->transcriber_user_id,
                 'checker_user_id' => $rec->checker_user_id,
                 'created_timestamp' =>  $rec->created_timestamp,
@@ -1338,16 +1345,32 @@ function canEditJob($user,$jobid) {
     global  $settings;
     $time_limit = $settings->view_timeout_seconds;
 
+    //if only a transcriber then cannot edit that which has already be sent in to be checked
+    if  (
+        ($user && $user->roles()  && in_array("Administrator", $user->roles())) ||
+        ($user && $user->roles()  && in_array("Checker", $user->roles()))
+    ) {
+        $b_edit_completed = true;
+    } else {
+        $b_edit_completed = false;
+    }
+
    // can edit this job if the time locked is null or exceeds the cutoff
     // or the user is the same if viewing_user_id set
     $userid = $user->data()->id;
     $db = DB::getInstance();
     $where_string = "(id = ? ) AND ( (viewing_user_id = $userid ) OR (viewing_user_id is NULL) OR ($time_limit <=  UNIX_TIMESTAMP() - viewing_user_at) ||  (viewing_user_at is NULL) ) ";
-    $db->query("Select id FROM ht_jobs where $where_string ;",[$jobid]);
+    $result = $db->query("Select id,checked_at FROM ht_jobs where $where_string ;",[$jobid]);
     if ( ( !$db->count() ) || ($db->count() <= 0)) {
         return false;
     } else {
-        return true;
+        $rec = $result->first();
+        if ($rec->checked_at && !$b_edit_completed) {
+            return false;
+        } else {
+            return true;
+        }
+
     }
 }
 // Set API's in users/private_init.php
@@ -1544,6 +1567,22 @@ function recursiveRemove($dir) {
         }
     }
     rmdir($dir);
+}
+
+function checkForDuplicateEmailsWithUser($email,$client_id){
+    $db = DB::getInstance();
+
+    $query = $db->query( "select id,profile_id,fname,mname,lname,duplicate from ht_jobs where email = ? AND client_id = ?",[$email,$client_id]);
+
+    $number_duplicates_found = $query->count();
+
+    if ($number_duplicates_found == 0) {
+        return false;
+    } else {
+
+        $results = $query->results();
+        return $results;
+    }
 }
 
 

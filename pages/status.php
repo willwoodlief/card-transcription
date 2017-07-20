@@ -26,6 +26,7 @@ if ($settings->site_offline==1){die("The site is currently offline.");}
                         <li class="nav active"><a href="#completed-jobs" data-toggle="tab">Completed Jobs</a></li>
                         <li class="nav"><a href="#waiting-for-checks" data-toggle="tab">Waiting Checks</a></li>
                         <li class="nav"><a href="#waiting-for-trans" data-toggle="tab">Waiting Transcription</a></li>
+                        <li class="nav"><a href="#waiting-for-dupes" data-toggle="tab">Marked Duplicates</a></li>
                     </ul>
                     <div class="tab-content">
                         <div class="tab-pane fade in active" id="completed-jobs" >
@@ -39,6 +40,10 @@ if ($settings->site_offline==1){die("The site is currently offline.");}
 
                         <div class="tab-pane fade" id="waiting-for-trans" data-src="waiting_trans_grid.php">
                             <iframe src="" id="waiting-for-trans-grid-table" height="550px" width="720px" style="border:0 none;"></iframe>
+                        </div>
+
+                        <div class="tab-pane fade" id="waiting-for-dupes" data-src="duplicate_grid.php">
+                            <iframe src="" id="waiting-for-duplicate-grid-table" height="550px" width="950px" style="border:0 none;"></iframe>
                         </div>
                     </div>
                 </div>

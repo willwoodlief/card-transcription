@@ -1,5 +1,7 @@
 $( function() {
 
+    var auto_start_name = 'Transcription in process...'
+
 $('.form-control').phoenix({
     namespace: 'phoenixStorage-job-' + jobid,
     webStorage: 'sessionStorage',
@@ -28,6 +30,22 @@ $('.a-job-form').submit(function(e){
     $(document).click(function() {
         start_view_time = Date.now()/1000;
     });
+
+    var fname_check = $('#fname').val();
+    if (fname_check === auto_start_name) {
+        $('#fname').val('');
+    }
+
+    $('#bad_scan').click(function(event) {
+        var doit = confirm("Are you sure want to mark this as a bad scan?");
+        if (!doit) {
+            //stop submission
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        }
+    });
+
 });
 
 function doTimeView() {
