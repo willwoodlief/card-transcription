@@ -19,14 +19,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 class Token {
 	public static function generate(){
-		return Session::put(Config::get('session/token_name'), md5(uniqid()));
+        $tokenName = Config::get('session/token_name');
+	    //changed by will on 7/23/2017 to add more consistant tokens across multiple tabls
+        // only generate if the last timestamp to generate for this session is over 30 minutes
+        if (Session::exists('csrf_last_generate_time')) {
+            $timestamp = Session::get('csrf_last_generate_time');
+        } else {
+            $timestamp = time();
+            Session::put('csrf_last_generate_time', $timestamp);
+        }
+        $seconds_difference = time() - $timestamp;
+        if ($seconds_difference > 60* 30) {
+            return Session::put($tokenName, md5(uniqid()));
+        } else {
+            if (Session::exists($tokenName)) {
+                return Session::get($tokenName);
+            } else {
+                return Session::put($tokenName, md5(uniqid()));
+            }
+
+        }
+
 	}
 
 	public static function check($token){
 		$tokenName = Config::get('session/token_name');
 
 		if (Session::exists($tokenName) && $token === Session::get($tokenName)) {
-			Session::delete($tokenName);
+		    // Changed by Will : cannot delete token after every check as we are reusing same token while work will be done
+		//	Session::delete($tokenName);
 			return true;
 		}
 		return false;
