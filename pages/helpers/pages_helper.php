@@ -1039,6 +1039,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
         case 1: {
             $dupe_where = ' AND j.duplicate > 0';
             $checked_op = '';
+            $transcribed_op = '';
             break;
         } #duplicates can be checked or unchecked
         case 2: { $dupe_where = '';break;}

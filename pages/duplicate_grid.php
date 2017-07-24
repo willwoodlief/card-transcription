@@ -72,6 +72,9 @@ for($i=0; $i < sizeof($jobs); $i++) {
     $node['profile_id'] = $jobs[$i]->job->profile_id;
     $node['uploaded_timestamp'] = $jobs[$i]->job->uploaded_timestamp;
     $node['seconds_for_transcription'] = $jobs[$i]->job->transcribed_timestamp - $jobs[$i]->job->uploaded_timestamp;
+    if ($node['seconds_for_transcription'] <= 0) {
+        $node['seconds_for_transcription'] = null;
+    }
     $node['transcriber_name'] = $jobs[$i]->translater->lname;
     $node['checker_name'] = $jobs[$i]->checker->lname;
     $node['seconds_for_checking'] = $jobs[$i]->job->checked_timestamp - $jobs[$i]->job->transcribed_timestamp;
