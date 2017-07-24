@@ -4,22 +4,26 @@ use Phinx\Migration\AbstractMigration;
 
 class AddDupeCheckToPerms extends AbstractMigration
 {
-    protected $pageId = 56;
-    protected $statusName = 'In Progress';
 
+    protected $page = "pages/get_duplicate_information.php";
     /**
      * Migrate Up.
      */
     public function up()
     {
 
-        $singleRow =  ['id' => $this->pageId, 'page' => 'pages/get_duplicate_information.php','private'=>1];
+
+        $singleRow =  [ 'page' => $this->page ,'private'=>1];
         $table = $this->table('pages');
         $table->insert($singleRow);
         $table->saveData();
 
+        //get page id
+        $result = $this->fetchRow("SELECT id as  last_page from pages WHERE page = '" . $this->page. "'");
+        $pageID = $result['last_page'] ;
 
-        $singleRow = ['page_id' => $this->pageId, 'permission_id' => 4]; //transcriber
+
+        $singleRow = ['page_id' => $pageID, 'permission_id' => 4]; //transcriber
 
         $table = $this->table('permission_page_matches');
         $table->insert($singleRow);
@@ -31,7 +35,9 @@ class AddDupeCheckToPerms extends AbstractMigration
      */
     public function down()
     {
-        $this->execute('Delete from permission_page_matches where page_id = ' . $this->pageId);
-        $this->execute('Delete from pages where id = ' . $this->pageId);
+        $result = $this->fetchRow("SELECT id as  last_page from pages WHERE page = '" . $this->page. "'");
+        $pageID = $result['last_page'] ;
+        $this->execute('Delete from permission_page_matches where page_id = ' . $pageID);
+        $this->execute('Delete from pages where id = ' . $pageID);
     }
 }
