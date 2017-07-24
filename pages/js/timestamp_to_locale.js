@@ -2,7 +2,7 @@ $(function() {
     $(".a-timestamp-full-date-time").each(function() {
         var qthis = $(this);
         var ts = $(this).data('ts');
-        if (ts === 0 || ts === '0') {
+        if (ts === 0 || ts === '0' || ts === '') {
             qthis.text('' );
         } else {
             var m = moment(ts * 1000);
@@ -13,7 +13,7 @@ $(function() {
     $(".a-timestamp-full-date").each(function() {
         var qthis = $(this);
         var ts = $(this).data('ts');
-        if (ts === 0 || ts === '0') {
+        if (ts === 0 || ts === '0' || ts === '') {
             qthis.text('' );
         } else {
             var m = moment(ts * 1000);
@@ -24,7 +24,7 @@ $(function() {
     $(".a-timestamp-short-date-time").each(function() {
         var qthis = $(this);
         var ts = $(this).data('ts');
-        if (ts === 0 || ts === '0') {
+        if (ts === 0 || ts === '0' || ts === '') {
             qthis.text('' );
         } else {
             var m = moment(ts*1000);
@@ -36,7 +36,7 @@ $(function() {
     $(".a-timestamp-short-date").each(function() {
         var qthis = $(this);
         var ts = $(this).data('ts');
-        if (ts === 0 || ts === '0') {
+        if (ts === 0 || ts === '0' || ts === '') {
             qthis.text('' );
         } else {
             var m = moment(ts * 1000);
