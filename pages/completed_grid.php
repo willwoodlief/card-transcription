@@ -77,7 +77,8 @@ for($i=0; $i < sizeof($jobs); $i++) {
     $node['seconds_for_checking'] = $jobs[$i]->job->checked_timestamp - $jobs[$i]->job->transcribed_timestamp;
     $node['card_name'] = $jobs[$i]->transcribe->fname.' '.$jobs[$i]->transcribe->lname;
     $node['card_link'] = '<a href="'.$abs_us_web_root.'pages/job.php?jobid=' .$jobs[$i]->job->id.
-        '" target="_BLANK"> ' .
+        '" target="_BLANK" data-trigger="hover"  rel="popover" data-html="true" data-content=\'<iframe frameborder="0" scrolling="no" height="425" width="410"
+src="job_preview.php?jobid='.$jobs[$i]->job->id.'" style="" class="preview-iframe"></iframe>\'> ' .
         $linkName .
         '</a>';
     array_push($completed,$node);
@@ -235,6 +236,8 @@ for($i=0; $i < sizeof($jobs); $i++) {
         dataView.setItems(data);
         dataView.setFilter(filter);
         dataView.endUpdate();
+
+
     });
 
     function link_formatter( row, cell, value, columnDef, dataContext ) {

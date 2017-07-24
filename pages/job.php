@@ -8,6 +8,11 @@ require_once $abs_us_root.$us_url_root.'users/includes/header_not_closed.php';
 <link rel="stylesheet" href="../users/js/plugins/darkroomjs/build/darkroom.css">
 
 <style>
+
+    .popover{
+        max-width: 1000px; /* Max Width of the popover , make it so its not clipping */
+    }
+
     .enlarge {
         transform: scale(3);
         position:absolute;
@@ -58,6 +63,10 @@ require_once $abs_us_root.$us_url_root.'users/includes/header_not_closed.php';
     div.duplicate-control div.message {
         display: inline-block;
         margin-top: 1em;
+    }
+
+    div.row.duplicate {
+        display: none;
     }
 
     div.duplicate-control.start-duplicate-hidden {
@@ -150,33 +159,44 @@ if(!empty($_POST['approve'])) {
         die('Token doesn\'t match!');
     }
     if (!$job->translater->id) { die("Cannot approve something that was not done first");}
-    clearJobViewStamp($jobid);
-    if ($user && $user->roles()  && in_array("Administrator", $user->roles())) {
-        $what = $db->update('ht_jobs', $jobid, ['checker_user_id'=>$user->data()->id,'checked_at'=> time()]);
-        call_api($job,$settings->website_url);
-        runAfterHook(rtrim($abs_us_root.$us_url_root,"/"),$job->job->id);
-        if (!$what) {
-            $validation->addError($db->error());
-            $error_count ++;
-        } else {
-            Redirect::to($us_url_root."pages/check.php");
-        }
 
-    }
-    elseif ($user && $user->roles()  && in_array("Checker", $user->roles())) {
-        $what = $db->update('ht_jobs', $jobid, ['checker_user_id'=>$user->data()->id,'checked_at'=> time()]);
-        call_api($job,$settings->website_url);
-        runAfterHook(rtrim($abs_us_root.$us_url_root,"/"),$job->job->id);
-        if (!$what) {
-            $validation->addError($db->error());
-            $error_count ++;
-        } else {
-            Redirect::to($us_url_root."pages/check.php");
-        }
-
-
+    $query = checkForDuplicateEmailsWithUser($job->transcribe->email,$job->job->client_id,2);
+    $fields = ['checker_user_id'=>$user->data()->id,'checked_at'=> time()];
+    if ($query) {
+        $fields['duplicate'] = 1;
+        $validation->addError("this is a duplicate: " . $job->transcribe->email );
+        $error_count ++;
     } else {
-        die('Role that is not checker or admin has submitted wrong form');
+        $fields['duplicate'] = 0;  //clear any potentially other duplicate
+    }
+    if ($error_count == 0) {
+        clearJobViewStamp($jobid);
+        if ($user && $user->roles() && in_array("Administrator", $user->roles())) {
+            $what = $db->update('ht_jobs', $jobid, $fields);
+            call_api($job, $settings->website_url);
+            runAfterHook(rtrim($abs_us_root . $us_url_root, "/"), $job->job->id);
+            if (!$what) {
+                $validation->addError($db->error());
+                $error_count++;
+            } else {
+                Redirect::to($us_url_root . "pages/check.php");
+            }
+
+        } elseif ($user && $user->roles() && in_array("Checker", $user->roles())) {
+            $what = $db->update('ht_jobs', $jobid, $fields);
+            call_api($job, $settings->website_url);
+            runAfterHook(rtrim($abs_us_root . $us_url_root, "/"), $job->job->id);
+            if (!$what) {
+                $validation->addError($db->error());
+                $error_count++;
+            } else {
+                Redirect::to($us_url_root . "pages/check.php");
+            }
+
+
+        } else {
+            die('Role that is not checker or admin has submitted wrong form');
+        }
     }
 }
 
@@ -258,6 +278,8 @@ if(!empty($_POST['transcribe'])) {
 
     $fields = [];
 
+
+
     foreach($fields_to_check as $key=>$field) {
         $val = to_utf8(Input::get($field));
        // echo "get {$key} => {$field} == {$val}<br>";
@@ -270,22 +292,39 @@ if(!empty($_POST['transcribe'])) {
 
 
 
+    $query = checkForDuplicateEmailsWithUser($fields['email'],$job->job->client_id);
+    if ($query) {
+        $validation->addError("this is a duplicate: " . $fields['email'] );
+        $error_count ++;
+    } else {
+        $fields['duplicate'] = 0;  //clear any potentially other duplicate
+    }
 
-   // print_nice($fields);
-   // print_nice($_REQUEST);
-    $fields['modified_at'] = time();
-    $what = $db->update('ht_jobs', $jobid, $fields);
-    if (!$what) {
+    if ($error_count == 0) {
+        // print_nice($fields);
+        // print_nice($_REQUEST);
+        $fields['modified_at'] = time();
+        $what = $db->update('ht_jobs', $jobid, $fields);
+        if (!$what) {
 
-        $validation->addError($db->error());
+            $validation->addError($db->error());
+            $error_count ++;
+        }
+    } else {
+        $validation->addError("Could not save record due to previous errors" );
         $error_count ++;
     }
 
-    $tag_string = to_utf8(Input::get('tag_string'));
-    $error = save_tag_string($jobid,$tag_string);
-    if ($error) {
-        $validation->addError($error);
-        $error_count ++;
+
+
+
+    if ($error_count == 0) {
+        $tag_string = to_utf8(Input::get('tag_string'));
+        $error = save_tag_string($jobid, $tag_string);
+        if ($error) {
+            $validation->addError($error);
+            $error_count++;
+        }
     }
 
     if ($error_count == 0) {
@@ -375,6 +414,10 @@ $csrf = Token::generate();
         display: none;
     <?php } ?>
     }
+
+    div.duplicate-control {
+        display: none;
+    }
 </style>
 
 <div id="page-wrapper" style="">
@@ -419,7 +462,8 @@ $csrf = Token::generate();
 		<!-- Page Heading -->
         <div class="row  is-table-row duplicate">
             <div class="panel panel-warning col-xs-3 duplicate-control <?= $maybe_hidden_class ?>" >
-                <div class="row ">
+                <div class="row duplicate-info">
+
                     <div class="col-xs-5  message" >
                         Duplicate Detected!
                     </div>
@@ -587,14 +631,6 @@ $csrf = Token::generate();
                         <div class="col-xs-12 " style="">
 
 
-
-
-
-
-                           
-
-
-
                             <div class="form-group col-xs-2 input-job-group">
                                 <label for="website"  class="input-job-label">Website</label>
                                 <input type="text" class="form-control input-job-box" name="website" id="website" value="<?=$job->transcribe->website ?>">
@@ -635,7 +671,6 @@ $csrf = Token::generate();
 
 
                     </form>
-
 
                 </div>
 

@@ -75,6 +75,9 @@ for($i=0; $i < sizeof($jobs); $i++) {
     $node['transcriber_name'] = $jobs[$i]->translater->lname;
     $node['checker_name'] = $jobs[$i]->checker->lname;
     $node['seconds_for_checking'] = $jobs[$i]->job->checked_timestamp - $jobs[$i]->job->transcribed_timestamp;
+    if ($node['seconds_for_checking'] <= 0) {
+        $node['seconds_for_checking'] = null;
+    }
     $node['card_name'] = $jobs[$i]->transcribe->fname.' '.$jobs[$i]->transcribe->lname;
     $node['card_link'] = '<a href="'.$abs_us_web_root.'pages/job.php?jobid=' .$jobs[$i]->job->id.
         '" target="_BLANK"> ' .

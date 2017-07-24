@@ -1013,15 +1013,16 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
     $db = DB::getInstance();
 
     if ($b_is_transcribed) {
-        $transcribed_op = 'IS NOT';
+        $transcribed_op = ' AND j.transcriber_user_id  IS NOT null';
     } else {
-        $transcribed_op = 'IS';
+        $transcribed_op = ' AND j.transcriber_user_id  IS null';
     }
 
+
     if ($b_is_checked) {
-        $checked_op = 'IS NOT';
+        $checked_op = ' AND j.checker_user_id IS NOT null';
     } else {
-        $checked_op = 'IS';
+        $checked_op = ' AND j.checker_user_id IS null';
     }
 
     if ($b_only_free) {
@@ -1035,7 +1036,11 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
 
     switch ($n_dupe_policy) {
         case 0: { $dupe_where = ' AND j.duplicate = 0';break;}
-        case 1: { $dupe_where = ' AND j.duplicate > 0';break;}
+        case 1: {
+            $dupe_where = ' AND j.duplicate > 0';
+            $checked_op = '';
+            break;
+        } #duplicates can be checked or unchecked
         case 2: { $dupe_where = '';break;}
     }
 
@@ -1058,8 +1063,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
         $where_users = "AND {$where_users}";
     }
 
-    $where_stuff = "j.transcriber_user_id {$transcribed_op} null AND
-                        j.checker_user_id {$checked_op} null {$where_users} $free_check {$dupe_where}";
+    $where_stuff = "1  {$transcribed_op}  {$checked_op}  {$where_users} $free_check {$dupe_where}";
 
     if ($jobid) {
         $jobid = intval($jobid);
@@ -1067,8 +1071,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
     }
 
 
-
-    $query = $db->query( "
+    $sql = "
         select 
           j.id, j.client_id, j.profile_id, j.is_initialized, j.duplicate,
           j.transcriber_user_id, j.checker_user_id,
@@ -1107,7 +1110,13 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
           left join ht_images edit_side_b ON edit_side_b.ht_job_id = j.id AND edit_side_b.side = 1 AND edit_side_b.is_edited=1
 
         where {$where_stuff} AND j.is_initialized = 1
-    ",[]);
+    ";
+
+    $query = $db->query( $sql ,[]);
+    if ($query->error() === true) {
+        publish_to_sns("Error in SQL Getting Jobs", $sql);
+        throw new RuntimeException('Database error getting jobs');
+    }
 
     $results = $query->results();
     $ret = [];
@@ -1569,14 +1578,17 @@ function recursiveRemove($dir) {
     rmdir($dir);
 }
 
-function checkForDuplicateEmailsWithUser($email,$client_id){
+function checkForDuplicateEmailsWithUser($email,$client_id,$threshhold=1){
+    if (empty($email) || empty(trim($email))) {
+        return false;
+    }
     $db = DB::getInstance();
 
     $query = $db->query( "select id,profile_id,fname,mname,lname,duplicate from ht_jobs where email = ? AND client_id = ?",[$email,$client_id]);
 
     $number_duplicates_found = $query->count();
 
-    if ($number_duplicates_found == 0) {
+    if ($number_duplicates_found < $threshhold) {
         return false;
     } else {
 

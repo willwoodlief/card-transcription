@@ -2,9 +2,12 @@
 
 use Phinx\Migration\AbstractMigration;
 
-class AddDupeTabToPerms extends AbstractMigration
+class AddJobPreviewToPerms extends AbstractMigration
 {
-    protected $page = "pages/duplicate_grid.php";
+
+
+    # note to make add a new page, just copy this code inside the class and set page to the new name, and set permission 1 though 4
+    protected $page = "pages/job_preview.php";
     /**
      * Migrate Up.
      */

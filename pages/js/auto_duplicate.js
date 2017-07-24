@@ -14,8 +14,12 @@ $(function(){
                 function( data ) {
                     if (data.status === 'ok') {
                         if (data.is_duplicate) {
-                            $('#email_for_duplicate').val(email);
-                            AutoDuplicateDoGUI(true,data);
+                            var true_count = AutoDuplicateDoGUI(true,data);
+                            if (true_count > 0) {
+                                $('#email_for_duplicate').val(email);
+                            }
+
+
                         } else {
                             AutoDuplicateDoGUI(false,data);
                         }
@@ -46,19 +50,50 @@ function toggleDuplicateGUI(b_on) {
 }
 
 function AutoDuplicateDoGUI(is_duplicate,data) {
-    toggleDuplicateGUI(is_duplicate);
-        if (is_duplicate) {
-            var link_html = "<ul>";
-            for(var i = 0; i < data.duplicates.length; i ++) {
-                var dup = data.duplicates[i];
-                var the_link = dup.link;
-                link_html +=  '<li>' + the_link + '</li>';
 
+    var count_dupes = 0;
+    if (is_duplicate) {
+        var link_html = "<ul>";
+
+        for(var i = 0; i < data.duplicates.length; i ++) {
+            var dup = data.duplicates[i];
+            count_dupes++;
+            if ( parseInt(dup.id) === jobid ) {
+                count_dupes--;
+                continue;
             }
-            link_html += "</ul>";
-            $('div.duplicate-control div.message').html(data.message  );
-            $('div.duplicate-control div.dupe-link-container').html(link_html)
+            var the_link = dup.link;
+            link_html +=  '<li>' + the_link + '</li>';
+
         }
+        link_html += "</ul>";
+        $('div.duplicate-control div.message').html(data.message  );
+        $('div.duplicate-control div.dupe-link-container').html(link_html);
+        if (count_dupes > 0) {
+            $('div.duplicate-control').show();
+        } else {
+            $('div.duplicate-control').hide();
+        }
+
+    }
+
+    $('[rel="popover"]').popover({
+        html: true
+           }).on('shown.bs.popover', function(/*event*/) {
+               var iframe = $('.preview-iframe')[0];
+               if (iframe) {
+                   var winh = iframe.contentWindow.document.body.scrollHeight;
+                   iframe.style.height = winh + 'px';
+               }
+
+           });
+
+    if (count_dupes > 0) {
+        toggleDuplicateGUI(true);
+    } else {
+        toggleDuplicateGUI(false);
+    }
+    return count_dupes;
 }
 
 

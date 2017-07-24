@@ -1,6 +1,9 @@
 function millisecondsToStr (milliseconds) {
     // TIP: to find current time in milliseconds, use:
     // var  current_time_milliseconds = new Date().getTime();
+    if (!milliseconds) {
+        return '';
+    }
 
     function numberEnding (number) {
         return (number > 1) ? 's' : '';

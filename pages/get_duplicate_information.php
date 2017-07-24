@@ -29,7 +29,7 @@ if (!$email || !$client_id) {
     printOkJSONAndDie(['message' => 'no data to check duplicates', 'is_duplicate' => false]);
 }
 
-$results = checkForDuplicateEmailsWithUser($email,$client_id);
+$results = checkForDuplicateEmailsWithUser($email,$client_id,1);
 
 $number_duplicates_found = count($results);
 if (!$results || $number_duplicates_found == 0) {
@@ -41,7 +41,8 @@ if (!$results || $number_duplicates_found == 0) {
     foreach ($results as $rec) {
         $linkName = "Job# " . $rec->id . ' ' . $rec->fname . ' ' . $rec->mname . ' ' . $rec->lname;
         $rec->link =  '<a href="'.$abs_us_web_root.'pages/job.php?jobid=' . $rec->id .
-            '" target="_BLANK"> ' .
+            '" target="_BLANK" data-trigger="hover"  rel="popover" data-html="true" data-content=\'<iframe frameborder="0" scrolling="no" height="425" width="410"
+src="job_preview.php?jobid='.$rec->id.'" style="" class="preview-iframe"></iframe>\'> ' .
             $linkName .
             '</a>';
         array_push($data,$rec);
