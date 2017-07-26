@@ -30,10 +30,6 @@ class AddCountiesToJobs extends AbstractMigration
         }
 
 
-
-
-
-
     }
 
     public function down() {

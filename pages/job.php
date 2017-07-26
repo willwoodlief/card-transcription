@@ -272,7 +272,7 @@ if(!empty($_POST['transcribe'])) {
     }
     $fields_to_check = [
         'fname','mname','lname','suffix',
-        'title','suit','address','city','state','zip',
+        'title','suit','address','city','state','zip','county_name','county_code',
         'email','website','work_phone','work_phone_extension','cell_phone','fax',
         'skype','company','country','twitter','home_phone','other_phone','notes'];
 
@@ -284,7 +284,7 @@ if(!empty($_POST['transcribe'])) {
         $val = to_utf8(Input::get($field));
        // echo "get {$key} => {$field} == {$val}<br>";
         if (trim(Input::get($field))) {
-            $fields[$field] = Input::get($field);
+            $fields[$field] = trim(Input::get($field));
         } else {
             $fields[$field] = null;
         }
@@ -304,6 +304,17 @@ if(!empty($_POST['transcribe'])) {
     } else {
         $fields['duplicate'] = 0;  //clear any potentially other duplicate
     }
+
+    //get county info from zip code, if there is one
+    if (!empty(trim($fields['zip']))) {
+        $query = $db->query( "select place_name,county_name,county_code from zip_codes_usa where postal_code = LEFT(?, 5)",[trim($fields['zip'])]);
+        if ($query->count() > 0) {
+            $rec = $query->first();
+            $fields['county_name'] = $rec->county_name;
+            $fields['county_code'] = $rec->county_code;
+        }
+    }
+
 
     if ($error_count == 0) {
         // print_nice($fields);
