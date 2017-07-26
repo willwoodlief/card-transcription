@@ -291,8 +291,13 @@ if(!empty($_POST['transcribe'])) {
     }
 
 
-
-    $query = checkForDuplicateEmailsWithUser($fields['email'],$job->job->client_id);
+    // if the record is already transcribed, then threshold is 2 else one
+    if ($job->job->transcribed_timestamp ) {
+        $threshold = 2;
+    } else {
+        $threshold = 1;
+    }
+    $query = checkForDuplicateEmailsWithUser($fields['email'],$job->job->client_id,$threshold);
     if ($query) {
         $validation->addError("this is a duplicate: " . $fields['email'] );
         $error_count ++;
