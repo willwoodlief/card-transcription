@@ -8,4 +8,4 @@ php_flag   display_startup_errors on
 php_flag   display_errors on
 php_flag   html_errors on
 php_flag   log_errors on
-php_value  error_log  /home/ubuntu/htdocs/transcription/PHP_errors.log
+php_value  error_log  /home/transcription/htdocs/PHP_errors.log
