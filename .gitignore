@@ -20,6 +20,9 @@
 # Ignore application configuration
 /users/private_init.php
 
+#ignore my notes file
+/scratch/todo.txt
+
 zztop.php
 adminer.css
 

@@ -11,12 +11,20 @@ class ComposerStaticInita68703dc75b8ff839258f8db9b7429dd
         array (
             'Symfony\\Component\\Yaml\\' => 23,
         ),
+        'H' => 
+        array (
+            'Hashids\\' => 8,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
         'Symfony\\Component\\Yaml\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/yaml',
+        ),
+        'Hashids\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/hashids/hashids/lib/Hashids',
         ),
     );
 

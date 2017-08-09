@@ -7,4 +7,5 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Symfony\\Component\\Yaml\\' => array($vendorDir . '/symfony/yaml'),
+    'Hashids\\' => array($vendorDir . '/hashids/hashids/lib/Hashids'),
 );
