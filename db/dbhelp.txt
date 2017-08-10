@@ -15,3 +15,7 @@ http://docs.phinx.org/en/latest/commands.html#the-rollback-command
 To Create new migration
 http://docs.phinx.org/en/latest/commands.html#the-create-command
    bin/phinx.phar create MigrationName
+
+
+for status
+bin/phinx.phar status -e dev
