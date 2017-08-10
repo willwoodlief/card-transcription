@@ -10,6 +10,9 @@ require_once '../users/init.php';
 require_once $abs_us_root.$us_url_root.'/users/includes/header_json.php';
 require_once $abs_us_root.$us_url_root.'lib/aws/aws-autoloader.php';
 require_once $abs_us_root.$us_url_root.'pages/helpers/pages_helper.php';
+require_once $abs_us_root.$us_url_root.'vendor/autoload.php';
+require_once $abs_us_root.$us_url_root.'config/shared_config.php';
+use Hashids\Hashids;
 
 $ret = $_POST;
 /* post contains
@@ -53,6 +56,14 @@ if (!$what) {
     printErrorJSONAndDie('could not create job: '. $db->error());
 }
 $jobid = $db->lastId();
+
+//insert short_code into job
+$salt = getenv('HASH_ID_SALT');
+$min_length = intval( getenv('HASH_ID_MIN_LENGTH') );
+$hashids = new Hashids($salt,$min_length);
+$short_code = $hashids->encode($jobid);
+$db->update('ht_jobs', $jobid, ['short_code' => $short_code]);
+
 
 // Create an SDK class used to share configuration across clients.
 // api key and secret are in environmental variables
