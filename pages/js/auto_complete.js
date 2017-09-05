@@ -1,4 +1,4 @@
-// https://developers.google.com/maps/documentation/javascript/examples/places-autocomplete-addressform
+    // https://developers.google.com/maps/documentation/javascript/examples/places-autocomplete-addressform
 
 
     var  autocomplete, b_address_filled_in= false;
@@ -48,21 +48,33 @@
         //$('#address').val() = '';
 
 
+        var address = null;
+        var city = null;
+        var state = null;
+        var country = null;
+        var zip = null;
+
         // Get each component of the address from the place details
         // and fill the corresponding field on the form.
-        for (var i = 0; i < place.address_components.length; i++) {
-            var addressType = place.address_components[i].types[0];
-            if (componentForm[addressType]) {
-                var val = place.address_components[i][componentForm[addressType]];
-                data[addressType] = val;
+        if (place && place['address_components'] && place.address_components.length > 0) {
+            for (var i = 0; i < place.address_components.length; i++) {
+                var addressType = place.address_components[i].types[0];
+                if (componentForm[addressType]) {
+                    var val = place.address_components[i][componentForm[addressType]];
+                    data[addressType] = val;
+                }
             }
+
+
+            if ( data['street_number'] || data['route']) {
+                address =  data['street_number'] + ' ' + data['route'];
+            }
+             city = data['locality'];
+             state = data['administrative_area_level_1'];
+             country = data['country'];
+             zip = data['postal_code'];
         }
 
-        var address = data['street_number'] + ' ' + data['route'];
-        var city = data['locality'];
-        var state = data['administrative_area_level_1'];
-        var country = data['country'];
-        var zip = data['postal_code'];
 
         if (!address) {address='';}
         if (!city) {city='';}
