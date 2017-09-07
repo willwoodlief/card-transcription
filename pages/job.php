@@ -21,6 +21,10 @@ require_once $abs_us_root.$us_url_root.'users/includes/header_not_closed.php';
         z-index: 999;
     }
 
+    .oops {
+        background-color: rgba(255, 117, 42, 0.62);
+    }
+
     .form-group {
         margin-bottom: 5px;
     }
@@ -850,6 +854,8 @@ $real_good_dupe_flag = ( checkForDuplicateEmailsWithUser($job->transcribe->email
 </script>
 
 <script src="js/auto_zip.js"></script>
+<script src="js/check_url.js"></script>
+<script src="js/check_email.js"></script>
 <script src="js/auto_duplicate.js"></script>
 <script src="js/auto_complete.js"></script>
 <script src="js/jquery.phoenix.js"></script>
