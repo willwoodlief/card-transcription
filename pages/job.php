@@ -9,6 +9,15 @@ require_once $abs_us_root.$us_url_root.'users/includes/header_not_closed.php';
 
 <style>
 
+    .did-you-mean {
+        font-size: .7em;
+        color:  blue;
+        text-decoration: underline;
+        cursor: pointer;
+        float: right;
+        margin-right: 1em;
+    }
+
     .popover{
         max-width: 1000px; /* Max Width of the popover , make it so its not clipping */
     }
@@ -214,6 +223,7 @@ if(!empty($_POST['bad_scan'])) {
 
     $fields['fname'] = 'DELETE';
     $fields['lname'] = 'BAD SCAN';
+    $fields['email'] = null;
     $fields['transcriber_user_id'] = $user->data()->id;
     $fields['transcribed_at'] =  time();
     $what = $db->update('ht_jobs', $jobid, $fields);
@@ -531,8 +541,8 @@ $csrf = Token::generate();
                             <input type="hidden" name="jobid" value="<?=$job->job->id ?>" >
 
                             <div class="form-group col-xs-2 input-job-group">
-                                <label for="email" class="input-job-label" >Email</label>
-                                <input type="text" class="form-control input-job-box" name="email" id="email" value="<?=$job->transcribe->email ?>">
+                                <label for="email" class="input-job-label" >Email</label> <span class="did-you-mean"></span>
+                                <input type="text" class="form-control input-job-box" style="clear: both" name="email" id="email" value="<?=$job->transcribe->email ?>">
                             </div>
 
                             <div class="form-group col-xs-1 input-job-group" style="">
@@ -863,6 +873,7 @@ $real_good_dupe_flag = ( checkForDuplicateEmailsWithUser($job->transcribe->email
 <script src="../users/js/jquery.noty.packaged.min.js"></script>
 <script src="js/jquery.formatter.min.js"></script>
 <script src="js/phone_numbers.js"></script>
+<script src="js/mailcheck.min.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=<?= Config::get('keys/google') ?>&libraries=places&callback=initAutocomplete"
         async defer></script>
 
