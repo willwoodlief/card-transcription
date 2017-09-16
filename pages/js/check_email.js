@@ -1,5 +1,6 @@
 $(function(){
 
+    var da_email = $( "#email" );
     var suggested_email= null;
     $('.did-you-mean').click(function() {
         if (suggested_email) {
@@ -9,15 +10,15 @@ $(function(){
         }
     });
 
-    $( ":text" ).not('#email').blur(function() {
-        suggested_email = null;
-        $('.did-you-mean').text('');
+    $( ":text" ).focus(function() {
+       // suggested_email = null;
+      //  $('.did-you-mean').text('');
     });
 
 
 
 
-    $( "#email" ).blur(function() {
+    da_email.blur(function() {
         var val = $('#email').val();
         if (val.length >= 0) {
             var b_email_syntax_ok = validate_email(val);
@@ -82,7 +83,7 @@ $(function(){
     ];
     var secondLevelDomains = ['hotmail','gmail','yahoo','live'];
 
-    $('#email').on('blur', function() {
+    da_email.on('blur', function() {
         $(this).mailcheck({
             domains: domains,                       // optional
             secondLevelDomains: secondLevelDomains, // optional
