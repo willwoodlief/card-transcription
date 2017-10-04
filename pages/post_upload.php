@@ -102,6 +102,23 @@ $eback_type = Input::get('eback_type');
 $eback_width = Input::get('eback_width');
 $eback_height = Input::get('eback_height');
 
+//force to jpg, the types are only used at this point on newly created images in the buckets
+if ($front_type == 'jpeg') {
+    $front_type = 'jpg';
+}
+
+if ($back_type == 'jpeg') {
+    $back_type = 'jpg';
+}
+
+if ($efront_type == 'jpeg') {
+    $efront_type = 'jpg';
+}
+
+if ($eback_type == 'jpeg') {
+    $eback_type = 'jpg';
+}
+
 $updatetime =  Input::get('uploaded_at');
 $uploaded_date_string = date('Ymd',$updatetime);
 $clientID = Input::get('client_id');
@@ -112,6 +129,8 @@ $new_back_key_name = "img{$jobid}b_id{$clientID}_p{$profileID}_{$uploaded_date_s
 
 $enew_front_key_name = "e_img{$jobid}a_id{$clientID}_p{$profileID}_{$uploaded_date_string}.{$efront_type}";
 $enew_back_key_name = "e_img{$jobid}b_id{$clientID}_p{$profileID}_{$uploaded_date_string}.{$eback_type}";
+
+
 
 try {
     @$s3Client->copyObject(array(
