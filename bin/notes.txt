@@ -1,0 +1,22 @@
+October 23,2017
+
+Updated Phix to 8.1
+phinx is now part of cakephp, but I use it as a stand alone in the transcription project.
+The new version adds more features
+and the change log is at https://github.com/cakephp/phinx/blob/master/CHANGELOG.md
+So, I replaced the older phar with the new one in this directory.
+
+The steps to do this is as follows (in case you want to do add it elsewhere, you can just copy the bin/phinx.phar in the project ).
+Also, these steps can be repeated with future version upgrades. Just change the branch arg in the clone command below
+
+
+* go outside the directories of this project and make a folder you can delete after all this
+* go inside that new folder
+* git clone https://github.com/cakephp/phinx.git --branch v0.9.1
+* cd phinx
+* php composer.phar install  (I have composer set up to run on the command line)
+* curl -LSs https://box-project.github.io/box2/installer.php | php (the software to make this a phar)
+* php box.phar build
+
+this will make a phinx-v0.9.1.phar, rename it to phinx.phar, give it execute privledge, and move  where needed, delete temp directory
+the version when run will say 0.8.1 (older one was 0.6.4)
