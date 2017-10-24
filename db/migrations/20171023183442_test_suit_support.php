@@ -15,12 +15,12 @@ class TestSuitSupport extends AbstractMigration
         ########################################Tests##############################################
         $table = $this->table('tests', array('collation' => 'utf8mb4_unicode_ci','encoding'=>'utf8mb4','comment'=> "This defines each of the tests done"));
         $table->addColumn('test_name', 'string', array('after' => 'id','limit' => 255,'null' => false,'comment'=>"the name of the test"))
-            ->addColumn('test_group_minor_name', 'string', array('after' => 'test_name','limit' => 255,'null' => false,'comment'=>"smaller groups of a few related tests"))
-            ->addColumn('test_group_major_name', 'string', array('after' => 'test_group_minor_name','limit' => 255,'null' => false,'comment'=>"larger groups holding smaller groups"))
+            ->addColumn('class_name', 'string', array('after' => 'test_name','limit' => 255,'null' => false,'comment'=>"smaller groups of a few related tests"))
+            ->addColumn('suit_name', 'string', array('after' => 'test_group_minor_name','limit' => 255,'null' => false,'comment'=>"larger groups holding smaller groups"))
             ->addColumn('description', 'text', array('null'=>true,'default'=>null,'comment'=>"optional notes explaining the test"))
             ->addIndex(array('test_name'), array('unique' => true,'limit'=>150))
-            ->addIndex(array('test_group_minor_name'), array('unique' => false,'limit'=>150))
-            ->addIndex(array('test_group_major_name'), array('unique' => false,'limit'=>150))
+            ->addIndex(array('class_name'), array('unique' => false,'limit'=>150))
+            ->addIndex(array('suit_name'), array('unique' => false,'limit'=>150))
             ->addIndex(array('description'), array('unique' => false,'limit'=>150))
             ->create();
 
@@ -28,17 +28,20 @@ class TestSuitSupport extends AbstractMigration
 
         $table = $this->table('test_runs', array('collation' => 'utf8mb4_unicode_ci','encoding'=>'utf8mb4','comment'=> "This marks each time a test is actually run, the test output , and if it passed or not"));
 
-        $table->addColumn('has_passed', 'boolean', ['null' => false,'default'=>false,'length'=>1, 'signed' => false, 'comment'=>'if the test passed then not zero'])
+        $table->addColumn('test_id', 'integer', array('null' => false,'comment'=>"this is primary id of the test"))
+            ->addColumn('is_passed', 'boolean', ['null' => false,'default'=>false,'length'=>1, 'signed' => false, 'comment'=>'if the test passed then not zero'])
             ->addColumn('test_time_start', 'datetime', array('null' => false,'comment'=> "The start time of the run, add it when creating row"))
             ->addColumn('test_time_end', 'datetime', array('null' => true,'default'=>null,'comment'=> "The end time of the run, update this rown when the test ends"))
             ->addColumn('machine_id', 'string', array('limit' => 255,'null' => false,'comment'=>"the host name of the machine the tests are running on"))
             ->addColumn('machine_type', 'string', array('limit' => 255,'null' => false,'comment'=>"what kind of environment, valid values are [development,production]"))
             ->addColumn('test_type', 'string', array('limit' => 255,'null' => false,'comment'=>"what kind of test, valid values are [cronjob,manual,githook,automatic,other]"))
             ->addColumn('unit_output', 'text', array('null'=>true,'default'=>null,'comment'=>"the console output of the test is saved here"))
+            ->addColumn('error_stack_trace', 'text', array('null'=>true,'default'=>null,'comment'=>"If this a failed test, then the stack trace goes here"))
             ->addColumn('notes', 'text', array('null'=>true,'default'=>null,'comment'=>"this can be automaticly entered for certain tests or manually added to explain, or update a status and explanation of a test run"))
+            ->addForeignKey('test_id', 'tests', 'id', array('delete'=> 'RESTRICT', 'update'=> 'CASCADE'))
             ->addIndex(array('test_time_start'), array('unique' => false))
             ->addIndex(array('test_time_end'), array('unique' => false))
-            ->addIndex(array('has_passed'), array('unique' => false))
+            ->addIndex(array('is_passed'), array('unique' => false))
             ->addIndex(array('machine_id'), array('unique' => false,'limit'=>150))
             ->addIndex(array('machine_type'), array('unique' => false,'limit'=>150))
             ->addIndex(array('test_type'), array('unique' => false,'limit'=>150))
@@ -232,16 +235,3 @@ SQL;
     }
 }
 
-/*
-
-
-
-table: test_seed_values
-This is the actual seed data. Numeric and date time data can be cast, if necessary. For example if one field uses a timestamp can enter a human date time here for ease of use and editing
-id (primary)
-test_resource_seed_id (foreign key)
-data_type (var char)
-field_name (var char)
-field_value (var char)
-
- */
