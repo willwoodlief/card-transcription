@@ -2,6 +2,8 @@
 
 use Phinx\Migration\AbstractMigration;
 
+//todo set up with utf8mb4._unicode_ci later after all db gets converted
+
 class TestSuitSupport extends AbstractMigration
 {
     /**
@@ -13,7 +15,7 @@ class TestSuitSupport extends AbstractMigration
     public function up()
     {
         ########################################Tests##############################################
-        $table = $this->table('tests', array('collation' => 'utf8mb4_unicode_ci','encoding'=>'utf8mb4','comment'=> "This defines each of the tests done"));
+        $table = $this->table('tests', array('collation' => 'utf8_unicode_ci','encoding'=>'utf8','comment'=> "This defines each of the tests done"));
         $table->addColumn('test_name', 'string', array('after' => 'id','limit' => 255,'null' => false,'comment'=>"the name of the test"))
             ->addColumn('class_name', 'string', array('after' => 'test_name','limit' => 255,'null' => false,'comment'=>"smaller groups of a few related tests"))
             ->addColumn('suit_name', 'string', array('after' => 'test_group_minor_name','limit' => 255,'null' => false,'comment'=>"larger groups holding smaller groups"))
@@ -26,7 +28,7 @@ class TestSuitSupport extends AbstractMigration
 
         #######################################Test Runs###################################################
 
-        $table = $this->table('test_runs', array('collation' => 'utf8mb4_unicode_ci','encoding'=>'utf8mb4','comment'=> "This marks each time a test is actually run, the test output , and if it passed or not"));
+        $table = $this->table('test_runs', array('collation' => 'utf8_unicode_ci','encoding'=>'utf8','comment'=> "This marks each time a test is actually run, the test output , and if it passed or not"));
 
         $table->addColumn('test_id', 'integer', array('null' => false,'comment'=>"this is primary id of the test"))
             ->addColumn('is_passed', 'boolean', ['null' => false,'default'=>false,'length'=>1, 'signed' => false, 'comment'=>'if the test passed then not zero'])
@@ -95,7 +97,7 @@ SQL;
 
         ################################Test Resources#########################################
 
-        $table = $this->table('test_resources', array('collation' => 'utf8mb4_unicode_ci','encoding'=>'utf8mb4','comment'=> "This lists the resources used in the tests. For example users and transcriptions. For seeding and locking"));
+        $table = $this->table('test_resources', array('collation' => 'utf8_unicode_ci','encoding'=>'utf8','comment'=> "This lists the resources used in the tests. For example users and transcriptions. For seeding and locking"));
 
         $table->addColumn('type_resource', 'string', array('limit' => 255,'null' => false,'comment'=>"what kind of resource, valid values are [user,transcription], the type tells which table the id next is associated with"))
             ->addColumn('resource_id', 'integer', array('null' => false,'comment'=>"this is primary id of the resource, look at type_resource to see which table, these can be in different databases so no fk set"))
@@ -144,7 +146,7 @@ SQL;
 
         ####################################### Test Resource Locks#####################################################
 
-        $table = $this->table('test_resource_locks', array('collation' => 'utf8mb4_unicode_ci','encoding'=>'utf8mb4','comment'=> "This allows resource locking and sharing between the different tests"));
+        $table = $this->table('test_resource_locks', array('collation' => 'utf8_unicode_ci','encoding'=>'utf8','comment'=> "This allows resource locking and sharing between the different tests"));
         $table->addColumn('test_resource_id', 'integer', ['null' => false,'comment'=>"foreign key for test resource"])
             ->addColumn('test_run_id', 'integer', ['null' => false,'comment'=>"foreign key for test run"])
             ->addColumn('lock_time_start', 'datetime', array('null' => false,'comment'=> "The start time of the run, add it when creating row"))
@@ -157,7 +159,7 @@ SQL;
 
 
         ####################################### Test Seeds ##################################
-        $table = $this->table('test_seeds', array('collation' => 'utf8mb4_unicode_ci','encoding'=>'utf8mb4','comment'=> "The data that a resource is set to for a certain test. Also tells the test which resources to use"));
+        $table = $this->table('test_seeds', array('collation' => 'utf8_unicode_ci','encoding'=>'utf8','comment'=> "The data that a resource is set to for a certain test. Also tells the test which resources to use"));
 
         $table->addColumn('test_run_id', 'integer', ['null' => true,'comment'=>"foreign key for test run. Can be null if used as an ancestor"])
             ->addColumn('test_resource_id', 'integer', ['null' => true,'comment'=>"foreign key for test resource. Can be null if used as an ancestor"])
@@ -174,7 +176,7 @@ SQL;
 
 
         ######################## Test Seed Values ###################################333
-        $table = $this->table('test_seed_values', array('collation' => 'utf8mb4_unicode_ci','encoding'=>'utf8mb4','comment'=> "The actual seed data"));
+        $table = $this->table('test_seed_values', array('collation' => 'utf8_unicode_ci','encoding'=>'utf8','comment'=> "The actual seed data"));
 
         $table->addColumn('test_seed_id', 'integer', ['null' => true,'comment'=>"foreign key for the seed"])
             ->addColumn('data_type', 'string', array('limit' => 255,'null'=>false,'comment'=>"allows casting of data, if necessary. Needs to be one of [int,boolean,float,date,time,datetime,timestamp,unix_timestamp,string"))
