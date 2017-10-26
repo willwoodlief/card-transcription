@@ -161,16 +161,16 @@ SQL;
         ####################################### Test Seeds ##################################
         $table = $this->table('test_seeds', array('collation' => 'utf8_unicode_ci','encoding'=>'utf8','comment'=> "The data that a resource is set to for a certain test. Also tells the test which resources to use"));
 
-        $table->addColumn('test_run_id', 'integer', ['null' => true,'comment'=>"foreign key for test run. Can be null if used as an ancestor"])
+        $table->addColumn('test_id', 'integer', ['null' => true,'comment'=>"foreign key for test run. Can be null if used as an ancestor"])
             ->addColumn('test_resource_id', 'integer', ['null' => true,'comment'=>"foreign key for test resource. Can be null if used as an ancestor"])
             ->addColumn('subtype', 'string', array('limit' => 255,'null'=>true,'default'=>null,'comment'=>"allows the test to figure out how to use the resources. See each test for information"))
             ->addColumn('ancestors', 'string', array('limit' => 255,'null'=>true,'default'=>null,'comment'=>"any ancestor data is filled in first, this allows tweaking of test sets for other tests without reintering all the data"))
             ->addColumn('notes', 'text', array('null'=>true,'default'=>null,'comment'=>"any notes for this seeding, like explaining that its used as a generic seed, or what the strategy of the data will be"))
-            ->addForeignKey('test_run_id', 'test_runs', 'id', array('delete'=> 'RESTRICT', 'update'=> 'CASCADE'))
+            ->addForeignKey('test_id', 'tests', 'id', array('delete'=> 'RESTRICT', 'update'=> 'CASCADE'))
             ->addForeignKey('test_resource_id', 'test_resources', 'id', array('delete'=> 'RESTRICT', 'update'=> 'CASCADE'))
             ->addIndex(array('ancestors'), array('unique' => false,'limit'=>160))
             ->addIndex(array('subtype'), array('unique' => false,'limit'=>160))
-            ->addIndex(array('test_run_id','test_resource_id'), array('unique' => true,'name'=>'uidx_no_dupicate_resources_per_test'))
+            ->addIndex(array('test_id','test_resource_id'), array('unique' => true,'name'=>'uidx_no_dupicate_resources_per_test'))
             ->addIndex(array('notes'), array('unique' => false,'limit'=>150))
             ->create();
 
