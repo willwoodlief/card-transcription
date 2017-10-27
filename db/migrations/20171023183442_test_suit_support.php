@@ -100,12 +100,13 @@ SQL;
         $table = $this->table('test_resources', array('collation' => 'utf8_unicode_ci','encoding'=>'utf8','comment'=> "This lists the resources used in the tests. For example users and transcriptions. For seeding and locking"));
 
         $table->addColumn('resource_id', 'integer', array('null' => false,'comment'=>"this is primary id of the resource, look at type_resource to see which table, these can be in different databases so no fk set"))
-            ->addColumn('table_name', 'string', array('limit' => 255,'null'=>false,'comment'=>"the table name the resource is in"))
-            ->addColumn('db_name', 'string', array('limit' => 255,'null'=>false,'comment'=>"the database the resource is in"))
+            ->addColumn('table_name', 'string', array('limit' => 80,'null'=>false,'comment'=>"the table name the resource is in"))
+            ->addColumn('db_name', 'string', array('limit' => 80,'null'=>false,'comment'=>"the database the resource is in"))
             ->addColumn('notes', 'text', array('null'=>true,'default'=>null,'comment'=>"any notes for this resource, including explaining why it is used"))
             ->addIndex(array('resource_id'), array('unique' => false))
-            ->addIndex(array('table_name'), array('unique' => false,'limit'=>150))
-            ->addIndex(array('db_name'), array('unique' => false,'limit'=>150))
+            ->addIndex(array('table_name'), array('unique' => false))
+            ->addIndex(array('db_name'), array('unique' => false))
+            ->addIndex(array('db_name','table_name','resource_id'), array('unique' => true,'name'=>'uid_unique_rows'))
             ->addIndex(array('notes'), array('unique' => false,'limit'=>150))
             ->create();
 
