@@ -99,53 +99,16 @@ SQL;
 
         $table = $this->table('test_resources', array('collation' => 'utf8_unicode_ci','encoding'=>'utf8','comment'=> "This lists the resources used in the tests. For example users and transcriptions. For seeding and locking"));
 
-        $table->addColumn('type_resource', 'string', array('limit' => 255,'null' => false,'comment'=>"what kind of resource, valid values are [user,transcription], the type tells which table the id next is associated with"))
-            ->addColumn('resource_id', 'integer', array('null' => false,'comment'=>"this is primary id of the resource, look at type_resource to see which table, these can be in different databases so no fk set"))
+        $table->addColumn('resource_id', 'integer', array('null' => false,'comment'=>"this is primary id of the resource, look at type_resource to see which table, these can be in different databases so no fk set"))
             ->addColumn('table_name', 'string', array('limit' => 255,'null'=>false,'comment'=>"the table name the resource is in"))
             ->addColumn('db_name', 'string', array('limit' => 255,'null'=>false,'comment'=>"the database the resource is in"))
-            ->addColumn('subtype', 'string', array('limit' => 255,'null'=>true,'default'=>null,'comment'=>"allow the resource to be identified for the role it plays: see testing docs for more info"))
             ->addColumn('notes', 'text', array('null'=>true,'default'=>null,'comment'=>"any notes for this resource, including explaining why it is used"))
-            ->addIndex(array('type_resource'), array('unique' => false,'limit'=>150))
             ->addIndex(array('resource_id'), array('unique' => false))
             ->addIndex(array('table_name'), array('unique' => false,'limit'=>150))
             ->addIndex(array('db_name'), array('unique' => false,'limit'=>150))
-            ->addIndex(array('subtype'), array('unique' => false,'limit'=>150))
             ->addIndex(array('notes'), array('unique' => false,'limit'=>150))
             ->create();
 
-        $trigger = <<<SQL
-        CREATE TRIGGER trigger_before_update_test_resources
-            BEFORE UPDATE ON test_resources
-            FOR EACH ROW
-        BEGIN
-          IF NEW.type_resource not in ('user','transcription')
-          THEN
-               SIGNAL SQLSTATE '45000'
-                    SET MESSAGE_TEXT = 'Cannot add or update row in test_resources: type_resource has to be one of [user,transcription]';
-          END IF;
-          
-          
-        END
-SQL;
-        $this->execute($trigger);
-
-
-        $trigger = <<<SQL
-        CREATE TRIGGER trigger_before_create_test_resources
-            BEFORE INSERT ON test_resources
-            FOR EACH ROW
-        BEGIN
-          IF NEW.type_resource not in ('user','transcription')
-          THEN
-               SIGNAL SQLSTATE '45000'
-                    SET MESSAGE_TEXT = 'Cannot add or update row in test_resources: type_resource has to be one of [user,transcription]';
-          END IF;
-          
-          
-          
-        END
-SQL;
-        $this->execute($trigger);
 
 
         ####################################### Test Resource Locks#####################################################
