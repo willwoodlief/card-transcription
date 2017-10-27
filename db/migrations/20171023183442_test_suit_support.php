@@ -101,10 +101,14 @@ SQL;
 
         $table->addColumn('type_resource', 'string', array('limit' => 255,'null' => false,'comment'=>"what kind of resource, valid values are [user,transcription], the type tells which table the id next is associated with"))
             ->addColumn('resource_id', 'integer', array('null' => false,'comment'=>"this is primary id of the resource, look at type_resource to see which table, these can be in different databases so no fk set"))
+            ->addColumn('table_name', 'string', array('limit' => 255,'null'=>false,'comment'=>"the table name the resource is in"))
+            ->addColumn('db_name', 'string', array('limit' => 255,'null'=>false,'comment'=>"the database the resource is in"))
             ->addColumn('subtype', 'string', array('limit' => 255,'null'=>true,'default'=>null,'comment'=>"allow the resource to be identified for the role it plays: see testing docs for more info"))
             ->addColumn('notes', 'text', array('null'=>true,'default'=>null,'comment'=>"any notes for this resource, including explaining why it is used"))
             ->addIndex(array('type_resource'), array('unique' => false,'limit'=>150))
             ->addIndex(array('resource_id'), array('unique' => false))
+            ->addIndex(array('table_name'), array('unique' => false,'limit'=>150))
+            ->addIndex(array('db_name'), array('unique' => false,'limit'=>150))
             ->addIndex(array('subtype'), array('unique' => false,'limit'=>150))
             ->addIndex(array('notes'), array('unique' => false,'limit'=>150))
             ->create();
@@ -153,6 +157,7 @@ SQL;
             ->addColumn('lock_time_end', 'datetime', array('null' => true,'default'=>null,'comment'=> "The end time of the run, update this rown when the test ends"))
             ->addForeignKey('test_run_id', 'test_runs', 'id', array('delete'=> 'RESTRICT', 'update'=> 'CASCADE'))
             ->addForeignKey('test_resource_id', 'test_resources', 'id', array('delete'=> 'RESTRICT', 'update'=> 'CASCADE'))
+            ->addIndex(array('test_resource_id','test_run_id'), array('unique' => true,'name'=>'uidx_each_testrun_locks_resource_only_once'))
             ->addIndex(array('lock_time_end'), array('unique' => false))
             ->addIndex(array('lock_time_start'), array('unique' => false))
             ->create();
@@ -163,13 +168,13 @@ SQL;
 
         $table->addColumn('test_id', 'integer', ['null' => true,'comment'=>"foreign key for test run. Can be null if used as an ancestor"])
             ->addColumn('test_resource_id', 'integer', ['null' => true,'comment'=>"foreign key for test resource. Can be null if used as an ancestor"])
-            ->addColumn('subtype', 'string', array('limit' => 255,'null'=>true,'default'=>null,'comment'=>"allows the test to figure out how to use the resources. See each test for information"))
+            ->addColumn('subtype', 'string', array('limit' => 100,'null'=>false,'comment'=>"allows the test to figure out how to use the resources. See each test for information"))
             ->addColumn('ancestors', 'string', array('limit' => 255,'null'=>true,'default'=>null,'comment'=>"any ancestor data is filled in first, this allows tweaking of test sets for other tests without reintering all the data"))
             ->addColumn('notes', 'text', array('null'=>true,'default'=>null,'comment'=>"any notes for this seeding, like explaining that its used as a generic seed, or what the strategy of the data will be"))
             ->addForeignKey('test_id', 'tests', 'id', array('delete'=> 'RESTRICT', 'update'=> 'CASCADE'))
             ->addForeignKey('test_resource_id', 'test_resources', 'id', array('delete'=> 'RESTRICT', 'update'=> 'CASCADE'))
             ->addIndex(array('ancestors'), array('unique' => false,'limit'=>160))
-            ->addIndex(array('subtype'), array('unique' => false,'limit'=>160))
+            ->addIndex(array('test_id','subtype'), array('unique' => true,'name'=>'uidx_each_test_has_unique_subtype'))
             ->addIndex(array('test_id','test_resource_id'), array('unique' => true,'name'=>'uidx_no_dupicate_resources_per_test'))
             ->addIndex(array('notes'), array('unique' => false,'limit'=>150))
             ->create();
@@ -179,49 +184,14 @@ SQL;
         $table = $this->table('test_seed_values', array('collation' => 'utf8_unicode_ci','encoding'=>'utf8','comment'=> "The actual seed data"));
 
         $table->addColumn('test_seed_id', 'integer', ['null' => true,'comment'=>"foreign key for the seed"])
-            ->addColumn('data_type', 'string', array('limit' => 255,'null'=>false,'comment'=>"allows casting of data, if necessary. Needs to be one of [int,boolean,float,date,time,datetime,timestamp,unix_timestamp,string"))
-            ->addColumn('column_name', 'string', array('limit' => 150,'null'=>false,'comment'=>"the column name to be updated"))
-            ->addColumn('data', 'text', array('null'=>true,'default'=>null,'comment'=>"the value of the column. Null here will be made null there"))
+            ->addColumn('seed_column_name', 'string', array('limit' => 150,'null'=>false,'comment'=>"the column name to be updated"))
+            ->addColumn('seed_data', 'text', array('null'=>true,'default'=>null,'comment'=>"the value of the column. Null here will be made null there"))
             ->addForeignKey('test_seed_id', 'test_seeds', 'id', array('delete'=> 'RESTRICT', 'update'=> 'CASCADE'))
-            ->addIndex(array('data_type'), array('unique' => false,'limit'=>150))
-            ->addIndex(array('column_name'), array('unique' => false,'limit'=>150))
-            ->addIndex(array('column_name','test_seed_id'), array('unique' => true,'name'=>'uidx_no_duplicate_columns_in_seeds'))
+            ->addIndex(array('seed_column_name'), array('unique' => false,'limit'=>150))
+            ->addIndex(array('seed_column_name','test_seed_id'), array('unique' => true,'name'=>'uidx_no_duplicate_columns_in_seeds'))
             ->create();
 
 
-        $trigger = <<<SQL
-        CREATE TRIGGER trigger_before_update_test_seed_values
-            BEFORE UPDATE ON test_seed_values
-            FOR EACH ROW
-        BEGIN
-          IF NEW.data_type not in ('int','boolean','float','date','time','datetime','timestamp','unix_timestamp','string')
-          THEN
-               SIGNAL SQLSTATE '45000'
-                    SET MESSAGE_TEXT = 'cannot save test_seed_values: data_type has to be one of [int,boolean,float,date,time,datetime,timestamp,unix_timestamp,string]';
-          END IF;
-          
-          
-        END
-SQL;
-        $this->execute($trigger);
-
-
-        $trigger = <<<SQL
-        CREATE TRIGGER trigger_before_create_test_seed_values
-            BEFORE INSERT ON test_seed_values
-            FOR EACH ROW
-        BEGIN
-          IF NEW.data_type not in ('int','boolean','float','date','time','datetime','timestamp','unix_timestamp','string')
-          THEN
-               SIGNAL SQLSTATE '45000'
-                    SET MESSAGE_TEXT = 'cannot save test_seed_values: data_type has to be one of [int,boolean,float,date,time,datetime,timestamp,unix_timestamp,string]';
-          END IF;
-          
-          
-          
-        END
-SQL;
-        $this->execute($trigger);
     }
 
 
