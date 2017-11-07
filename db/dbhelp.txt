@@ -19,3 +19,6 @@ http://docs.phinx.org/en/latest/commands.html#the-create-command
 
 for status
 bin/phinx.phar status -e dev
+
+for breakpoints (most recent migration completed)
+bin/phinx.phar breakpoint -e dev
