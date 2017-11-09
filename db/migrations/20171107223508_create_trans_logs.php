@@ -80,7 +80,7 @@ SQL;
         $table = $this->table('ht_logs', array('collation' => 'utf8_unicode_ci','encoding'=>'utf8','comment'=> "Log Entries"));
 
         $table->addColumn('ht_job_id', 'integer', ['null' => false,'comment'=>"foreign key for the htjob"])
-            ->addColumn('category_type', 'string', array('limit' => 30,'null'=>false,'comment'=>"the category of the entry"))
+            ->addColumn('category_name', 'string', array('limit' => 30,'null'=>false,'comment'=>"the category of the entry"))
             ->addColumn('created_at', 'timestamp', array('null'=>false,'default'=>'CURRENT_TIMESTAMP','comment'=>"when the entry was created"))
             ->addColumn('action_version', 'integer', array('null'=>true,'default'=>'1','comment'=>"the version # of the action handling this "))
             ->addColumn('action_name', 'string', array('limit' => 30,'null'=>true,'default'=>null,'comment'=>"the action name handling this"))
@@ -88,9 +88,9 @@ SQL;
             ->addColumn('options_json', 'text', array('null'=>true,'default'=>null,'comment'=>"the options json string that turn it on or off, or dictate behavior"))
             ->addColumn('inputs_json', 'text', array('null'=>true,'default'=>null,'comment'=>"the inputs json string that that was used to do this action"))
             ->addForeignKey('ht_job_id', 'ht_jobs', 'id', array('delete'=> 'RESTRICT', 'update'=> 'CASCADE'))
-            ->addForeignKey('category_type', 'ht_log_categories', 'category_name', array('delete'=> 'RESTRICT', 'update'=> 'CASCADE'))
+            ->addForeignKey('category_name', 'ht_log_categories', 'category_name', array('delete'=> 'RESTRICT', 'update'=> 'CASCADE'))
             ->addIndex(array('created_at'), array('unique' => false))
-            ->addIndex(array('ht_job_id','category_type','created_at'), array('unique' => true,'name'=>'uidx_job_category_times'))
+            ->addIndex(array('ht_job_id','category_name','created_at'), array('unique' => true,'name'=>'uidx_job_category_times'))
             ->addIndex(array('log_entry'), array('unique' => false,'limit'=>60))
             ->addIndex(array('options_json'), array('unique' => false,'limit'=>60))
             ->create();
