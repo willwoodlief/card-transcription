@@ -91,7 +91,7 @@ function upload_local_storage($idOnly=null,$b_print=true) {
         $query = $db->query( "select * from ht_waiting p where  p.is_uploaded = 0 and upload_result is null order by p.created_at;",[]);
         $results = $query->results();
         foreach ($results as $rec) {
-            if (!test_site_connection($settings->website_url)) {return;}
+            if (!test_site_connection($settings->website_url)) {return false;}
 
             if ($b_print) {
                 print "Uploading record id " . $rec->id . ' [Client ID ' . $rec->client_id . '] ' . ' [Profile ID ' . $rec->profile_id . '] ' . "\n";
@@ -328,7 +328,7 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
      $db->update('ht_waiting', $row->id, ['upload_result' => $status_to_post, 'modified_at' => time()]);
  }
 
-
+    return true;
 
 }
 
@@ -702,7 +702,7 @@ function is_connected($url_to_check)
 {
     //http://stackoverflow.com/questions/4860365/determine-in-php-script-if-connected-to-internet
     $connected = fsockopen($url_to_check, 80);
-    $y = var_dump($connected);
+    //var_dump($connected);
 
     //website, port  (try 80 or 443)
     if ($connected){
@@ -1034,6 +1034,7 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
         $free_check = '';
     }
 
+    $dupe_where = '';
     switch ($n_dupe_policy) {
         case 0: { $dupe_where = ' AND j.duplicate = 0';break;}
         case 1: {
@@ -1386,6 +1387,8 @@ function canEditJob($user,$jobid) {
 // Set API's in users/private_init.php
 function call_api($job,$website_url) {
    $base_url = Config::get('api/on_check');
+   $main_url = Config::get('api/main_function');
+
     $query = [];
 	if (!empty($job->transcribe->email) )  {
        array_push($query , 'email='. urlencode($job->transcribe->email));
@@ -1502,17 +1505,25 @@ function call_api($job,$website_url) {
     $q = implode('&',$query);
 
     if (!empty($q)) {
-        $full_url = $base_url . '&' . $q;
-        $resp = get_curl_resp_code($full_url);
-        if ($resp != 200 && $resp != 404) {
-            publish_to_sns("Could not send api information", "While sending, got the response code of : $resp . The url was $full_url");
+        if (!empty($base_url)) {
+            $full_url = $base_url . '&' . $q;
+            $resp = get_curl_resp_code($full_url);
+            if ($resp != 200 && $resp != 404) {
+                publish_to_sns("Could not send api information", "While sending, got the response code of : $resp . The url was $full_url");
+            }
         }
 
-        $full_url = $website_url .'/processes/main_function.php'. '&' . $q;
-        $resp = get_curl_resp_code($full_url);
-        if ($resp != 200 && $resp != 404) {
-            publish_to_sns("Could not send main function information", "While sending, got the response code of : $resp . The url was $full_url");
+
+        if (!empty($main_url)) {
+            $full_url = $main_url . '&' . $q;
+            $resp = get_curl_resp_code($full_url);
+            if ($resp != 200 ) {
+                publish_to_sns("Could not send main function information", "While sending, got the response code of : $resp . The url was $full_url");
+            } else {
+                publish_to_sns("Sent data to main function",$query);
+            }
         }
+
     }
 }
 
@@ -1546,15 +1557,13 @@ function _pages_isLocalHost() {
         }
     }
 
-
     return false;
-
 }
 
 function runAfterHook($root_path_of_app,$jobid) {
     return;
-    $command = "php $root_path_of_app/tasks/after_hook.php $jobid";
-    execInBackground($command);
+   // $command = "php $root_path_of_app/tasks/after_hook.php $jobid";
+   // execInBackground($command);
 }
 
 //deletes all job information from the local database (warning doing this on production machine will remove all real jobs)
