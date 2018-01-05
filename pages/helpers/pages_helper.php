@@ -328,7 +328,7 @@ function upload_from_waiting_row($row,$to_bucket_name,$s3Client,$website_url) {
      $db->update('ht_waiting', $row->id, ['upload_result' => $status_to_post, 'modified_at' => time()]);
  }
 
-    return true;
+    return false;
 
 }
 
