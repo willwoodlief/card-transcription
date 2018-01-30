@@ -1083,6 +1083,8 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
           j.uploaded_at as uploaded_timestamp,
           j.transcribed_at as transcribed_timestamp,
           j.checked_at as checked_timestamp,
+          UNIX_TIMESTAMP(j.posted_main_ts) as posted_main_timestamp,
+          j.main_code ,
 
           j.uploader_email, j.uploader_lname,
           j.uploader_fname, 
@@ -1134,6 +1136,8 @@ function get_jobs($jobid,$b_is_transcribed=false,$b_is_checked=false,
                 'created_timestamp' =>  $rec->created_timestamp,
                 'uploaded_timestamp' => $rec->uploaded_timestamp,
                 'modified_timestamp' =>  $rec->modified_timestamp,
+                'posted_main_timestamp' => $rec->posted_main_timestamp,
+                'main_code'  => $rec->main_code,
                 'transcribed_timestamp' => $rec->transcribed_timestamp,  
 				'checked_timestamp' => $rec->checked_timestamp,
                 'uploader_email' => $rec->uploader_email,
@@ -1389,6 +1393,12 @@ function call_api($job,$website_url) {
    $base_url = Config::get('api/on_check');
    $main_url = Config::get('api/main_function');
 
+   // if not empty posted_main_ts then exit
+    if (!empty($job->job->posted_main_timestamp)) {
+        return; //don't post to main twice
+    }
+
+
     $query = [];
 	if (!empty($job->transcribe->email) )  {
        array_push($query , 'email='. urlencode($job->transcribe->email));
@@ -1508,8 +1518,14 @@ function call_api($job,$website_url) {
         if (!empty($base_url)) {
             $full_url = $base_url . '&' . $q;
             $resp = get_curl_resp_code($full_url);
-            if ($resp != 200 && $resp != 404) {
+            if ($resp < 200 || $resp >=400 ) {
                 publish_to_sns("Could not send api information", "While sending, got the response code of : $resp . The url was $full_url");
+            } else {
+                ////save posted_main_ts and main_code
+                 $time_string = date("Y-m-d H:i:s", time());
+                 $fields = ['main_code'=>$resp,'posted_main_ts'=> $time_string];
+                  $db = DB::getInstance();
+                  $db->update('ht_jobs', $job->job->id, $fields);
             }
         }
 
