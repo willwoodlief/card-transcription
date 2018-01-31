@@ -1518,14 +1518,8 @@ function call_api($job,$website_url) {
         if (!empty($base_url)) {
             $full_url = $base_url . '&' . $q;
             $resp = get_curl_resp_code($full_url);
-            if ($resp < 200 || $resp >=400 ) {
+            if ($resp != 200 && $resp != 404 ) {
                 publish_to_sns("Could not send api information", "While sending, got the response code of : $resp . The url was $full_url");
-            } else {
-                ////save posted_main_ts and main_code
-                 $time_string = date("Y-m-d H:i:s", time());
-                 $fields = ['main_code'=>$resp,'posted_main_ts'=> $time_string];
-                  $db = DB::getInstance();
-                  $db->update('ht_jobs', $job->job->id, $fields);
             }
         }
 
@@ -1533,9 +1527,14 @@ function call_api($job,$website_url) {
         if (!empty($main_url)) {
             $full_url = $main_url . '&' . $q;
             $resp = get_curl_resp_code($full_url);
-            if ($resp != 200 ) {
+            if ( false && $resp != 200 ) {
                 publish_to_sns("Could not send main function information", "While sending, got the response code of : $resp . The url was $full_url");
             } else {
+                ////save posted_main_ts and main_code
+                $time_string = date("Y-m-d H:i:s", time());
+                $fields = ['main_code'=>$resp,'posted_main_ts'=> $time_string];
+                $db = DB::getInstance();
+                $db->update('ht_jobs', $job->job->id, $fields);
                 publish_to_sns("Sent data to main function",$query);
             }
         }
